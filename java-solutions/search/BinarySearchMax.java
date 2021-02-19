@@ -53,7 +53,7 @@ public class BinarySearchMax {
                 //forall i = m + 1 .. arr.length - 1 : arr[i] >= arr[ind] -> ind <= m
                 // l < ind <= m < r
                 r = m;
-                // l == -1 && arr[m] >= arr[m + 1]
+                // l == l' && arr[m] >= arr[m + 1]
                 // l < ind <= m == r
             }
             //Inv: l < ind <= r
