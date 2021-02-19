@@ -1,8 +1,8 @@
 package search;
 
 public class BinarySearch {
-    //Pred: forall i = 0 .. arr.length-2 : a[i] >= a[i+1] && exists min index, that arr[ind] >= x
-    //Inv: l < arr[x] <= r && arr[i] >= arr[i+1]
+    //Pred: forall i = 0 .. arr.length-2 : a[i] >= a[i+1] && exists min index, that (arr[ind] >= x || ind == r)
+    //Inv: l < ind <= r
     //Post: R = ind
     private static int recbinsearch(int arr[], int x, int l, int r) {
         //l < ind <= r
@@ -25,7 +25,7 @@ public class BinarySearch {
         return r;
     }
 
-    //Pred: forall i = 0 .. arr.length-2 : a[i] >= a[i+1] && exists min index, that arr[ind] >= x && 0 < ind <= arr.length
+    //Pred: forall i = 0 .. arr.length-2 : a[i] >= a[i+1] && exists min index, that (arr[ind] >= x || ind == r) && 0 < ind <= arr.length
     //Post: R = ind
     private static int binsearch(int arr[], int x) {
         int l = -1, r = arr.length;
@@ -38,11 +38,11 @@ public class BinarySearch {
             if (arr[m] > x) {
                 // l == -1 && r == arr.length && r - 1 > l && m == (r + l) / 2 && arr[m] > x && l < ind <= r
                 l = m;
-                // r == arr.length && x < arr[m] -> m < ind && l == m < ind <= r &&
+                // r == arr.length && x < arr[m] -> m < ind (т.к. по убыванию) && l == m < ind <= r &&
             } else {
                 // l == -1 && r == arr.length && r - 1 > l && m == (r + l) / 2 && arr[m] <= x  && l < ind <= r
                 r = m;
-                // l == -1 && arr[m] <= x -> ind <= m && r == m && l < ind <= m == r
+                // l == -1 && arr[m] <= x -> ind <= m (т.к. по убыванию) && r == m && l < ind <= m == r
             }
             //Inv: l < ind <= r
         }
@@ -55,11 +55,13 @@ public class BinarySearch {
     //Pre: args.length > 0
     //Post: R = ind
     public static void main(String[] args) {
+        //args[0] : Integer && args[0] != null
         int x = Integer.parseInt(args[0]);
         // x = (int) args[0]
         int arr[] = new int[args.length - 1];
         // x = (int) args[0] && arr.length = args.length - 1
         for (int i = 1; i < args.length; i++) {
+            //args[i] : Integer && args[i] != null
             arr[i - 1] = Integer.parseInt(args[i]);
         }
         // x = (int) args[0] && arr.length = args.length - 1 && forall i = 0 .. args.length - 1 : arr[i] = (int) args[i+1]
