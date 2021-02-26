@@ -4,6 +4,7 @@ public class ArrayQueueADTTest {
     public static void fill(ArrayQueueADT stack) {
         for (int i = 0; i < 10; i++) {
             ArrayQueueADT.enqueue(stack, i);
+            ArrayQueueADT.push(stack, i);
         }
     }
 
@@ -20,6 +21,12 @@ public class ArrayQueueADTTest {
     public static void main(String[] args) {
         ArrayQueueADT stack = new ArrayQueueADT();
         fill(stack);
-        dump(stack);
+        fill(stack);
+        //dump(stack);
+        Object[] arr = ArrayQueueADT.toArray(stack);
+        for (int i = 0; i < arr.length; i++) {
+            System.out.println(arr[i].toString());
+        }
+        System.out.println(ArrayQueueADT.toStr(stack));
     }
 }
