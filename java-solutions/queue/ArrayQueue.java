@@ -10,6 +10,7 @@ package queue;
 */
 
 public class ArrayQueue {
+    //:NOTE: избавиться от лишнего указателя
     private int head, tail, size = 0;
     private Object[] elements = new Object[2];
 
@@ -87,6 +88,7 @@ public class ArrayQueue {
     */
     public Object[] toArray(){
         Object[] arr = new Object[size];
+        //:NOTE: ручное копирование
         for (int i = 0; i < size; i++) {
             arr[i] = elements[(head + i) % elements.length];
         }
