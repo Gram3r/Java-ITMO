@@ -15,9 +15,34 @@ public class ArrayQueueADT {
     private int head, size = 0;
     private Object[] elements = new Object[2];
 
+
+    private static void ensureCapacity(ArrayQueueADT queue, int capacity) {
+        Objects.requireNonNull(queue);
+        if (capacity > queue.elements.length) {
+            queue.elements = copy(queue, capacity * 2);
+            queue.head = 0;
+        }
+    }
+
+    private int tail(ArrayQueueADT queue) {
+        return (queue.head + queue.size) % queue.elements.length;
+    }
+
+    private static Object[] copy(ArrayQueueADT queue, int length){
+        Objects.requireNonNull(queue);
+        Object[] elementsnew = new Object[length];
+        if (queue.head < queue.tail(queue) || queue.size == 0) {
+            System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.size);
+        } else {
+            System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.elements.length - queue.head);
+            System.arraycopy(queue.elements, 0, elementsnew, queue.elements.length - queue.head, queue.tail(queue));
+        }
+        return elementsnew;
+    }
+
     /*
-        Pred: el != null && queue != null
-        Post: n == n' + 1 && a[n] == e && forall i == 1..n' : a[i] == a'[i]
+    Pred: el != null && queue != null
+    Post: n == n' + 1 && a[n] == e && forall i == 1..n' : a[i] == a'[i]
     */
     public static void enqueue(ArrayQueueADT queue, Object el) {
         Objects.requireNonNull(queue);
@@ -25,18 +50,6 @@ public class ArrayQueueADT {
         ensureCapacity(queue, queue.size + 1);
         queue.elements[queue.tail(queue)] = el;
         queue.size++;
-    }
-
-    private static void ensureCapacity(ArrayQueueADT queue, int capacity) {
-        Objects.requireNonNull(queue);
-        if (capacity > queue.elements.length) {
-            queue.elements = Arrays.copyOf(queue.toArray(queue), capacity * 2);
-            queue.head = 0;
-        }
-    }
-
-    private int tail(ArrayQueueADT queue) {
-        return (queue.head + queue.size) % queue.elements.length;
     }
 
     /*
@@ -93,15 +106,7 @@ public class ArrayQueueADT {
             Post: R == [a[1], a[2], ... , a[n]] && forall i == 1..n : a[i] == a'[i]
     */
     public static Object[] toArray(ArrayQueueADT queue){
-        Objects.requireNonNull(queue);
-        Object[] elementsnew = new Object[queue.size];
-        if (queue.head < queue.tail(queue) || queue.size == 0) {
-            System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.size);
-        } else {
-            System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.elements.length - queue.head);
-            System.arraycopy(queue.elements, 0, elementsnew, queue.elements.length - queue.head, queue.tail(queue));
-        }
-        return elementsnew;
+        return copy(queue, queue.size);
     }
     /*
             Pred: true && queue != null

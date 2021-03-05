@@ -15,20 +15,9 @@ public class ArrayQueue {
     private int head, size = 0;
     private Object[] elements = new Object[2];
 
-    /*
-        Pred: el != null
-        Post: n == n' + 1 && a[n] == e && forall i == 1..n' : a[i] == a'[i]
-    */
-    public void enqueue(Object el) {
-        assert el != null;
-        ensureCapacity(size + 1);
-        elements[tail()] = el;
-        size++;
-    }
-
     private void ensureCapacity(int capacity) {
         if (capacity > elements.length) {
-            elements = Arrays.copyOf(toArray(), capacity * 2);
+            elements = copy(capacity * 2);
             head = 0;
         }
     }
@@ -36,10 +25,35 @@ public class ArrayQueue {
     private int tail() {
         return (head + size) % elements.length;
     }
+
+    private Object[] copy(int length){
+        Object[] elementsnew = new Object[length];
+        if (head < tail() || size == 0) {
+            System.arraycopy(elements, head, elementsnew, 0, size);
+        } else {
+            System.arraycopy(elements, head, elementsnew, 0, elements.length - head);
+            System.arraycopy(elements, 0, elementsnew, elements.length - head, tail());
+        }
+        return elementsnew;
+    }
+
     /*
-            Pred: n > 0
-            Post: n == n' - 1 && forall i == 1..n' : a[i] == a'[i + 1] && R == a'[1]
+        Pred: el != null
+        Post: n == n' + 1 && a[n] == e && forall i == 1..n' : a[i] == a'[i]
     */
+
+    public void enqueue(Object el) {
+        assert el != null;
+        ensureCapacity(size + 1);
+        elements[tail()] = el;
+        size++;
+    }
+
+    /*
+        Pred: n > 0
+        Post: n == n' - 1 && forall i == 1..n' : a[i] == a'[i + 1] && R == a'[1]
+    */
+
     public Object dequeue() {
         assert size > 0;
         Object res = elements[head];
@@ -85,14 +99,7 @@ public class ArrayQueue {
             Post: R == [a[1], a[2], ... , a[n]] && forall i == 1..n : a[i] == a'[i]
     */
     public Object[] toArray(){
-        Object[] elementsnew = new Object[size];
-        if (head < tail() || size == 0) {
-            System.arraycopy(elements, head, elementsnew, 0, size);
-        } else {
-            System.arraycopy(elements, head, elementsnew, 0, elements.length - head);
-            System.arraycopy(elements, 0, elementsnew, elements.length - head, tail());
-        }
-        return elementsnew;
+        return copy(size);
     }
     /*
             Pred: true
