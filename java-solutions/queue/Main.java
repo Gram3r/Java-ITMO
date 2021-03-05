@@ -3,7 +3,8 @@ package queue;
 public class Main {
     public static void fill(ArrayQueue stack) {
         for (int i = 5; i < 20; i++) {
-            stack.enqueue(i);
+            stack.push(i);
+            stack.enqueue(i + 10);
         }
     }
 
@@ -18,6 +19,11 @@ public class Main {
         ArrayQueue stack = new ArrayQueue();
         fill(stack);
         fill(stack);
-        dump(stack);
+        //dump(stack);
+        Object[] arr = stack.toArray();
+        for (int i = 0; i < arr.length; i++) {
+            System.out.println(arr[i].toString());
+        }
+        System.out.println(stack.toStr());
     }
 }
