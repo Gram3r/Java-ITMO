@@ -9,8 +9,6 @@ package queue;
     forall i == 1..n : a[i] != null
 */
 
-import java.util.Arrays;
-
 public class ArrayQueueModule {
     private static int head, size = 0;
     private static Object[] elements = new Object[2];
@@ -24,17 +22,17 @@ public class ArrayQueueModule {
         }
     }
 
-    private static int tail() {
+    private static int getTail() {
         return (head + size) % elements.length;
     }
 
     private static Object[] copy(int length){
         Object[] elementsnew = new Object[length];
-        if (head < tail() || size == 0) {
+        if (head < getTail() || size == 0) {
             System.arraycopy(elements, head, elementsnew, 0, size);
         } else {
             System.arraycopy(elements, head, elementsnew, 0, elements.length - head);
-            System.arraycopy(elements, 0, elementsnew, elements.length - head, tail());
+            System.arraycopy(elements, 0, elementsnew, elements.length - head, getTail());
         }
         return elementsnew;
     }
@@ -45,7 +43,7 @@ public class ArrayQueueModule {
     public static void enqueue(Object el) {
         assert el != null;
         ensureCapacity(size + 1);
-        elements[tail()] = el;
+        elements[getTail()] = el;
         size++;
     }
 

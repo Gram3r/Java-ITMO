@@ -1,6 +1,5 @@
 package queue;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /*Model:
@@ -24,18 +23,18 @@ public class ArrayQueueADT {
         }
     }
 
-    private int tail(ArrayQueueADT queue) {
+    private int getTail(ArrayQueueADT queue) {
         return (queue.head + queue.size) % queue.elements.length;
     }
 
     private static Object[] copy(ArrayQueueADT queue, int length){
         Objects.requireNonNull(queue);
         Object[] elementsnew = new Object[length];
-        if (queue.head < queue.tail(queue) || queue.size == 0) {
+        if (queue.head < queue.getTail(queue) || queue.size == 0) {
             System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.size);
         } else {
             System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.elements.length - queue.head);
-            System.arraycopy(queue.elements, 0, elementsnew, queue.elements.length - queue.head, queue.tail(queue));
+            System.arraycopy(queue.elements, 0, elementsnew, queue.elements.length - queue.head, queue.getTail(queue));
         }
         return elementsnew;
     }
@@ -48,7 +47,7 @@ public class ArrayQueueADT {
         Objects.requireNonNull(queue);
         assert el != null;
         ensureCapacity(queue, queue.size + 1);
-        queue.elements[queue.tail(queue)] = el;
+        queue.elements[queue.getTail(queue)] = el;
         queue.size++;
     }
 
@@ -145,7 +144,7 @@ public class ArrayQueueADT {
         Objects.requireNonNull(queue);
         assert queue.size > 0;
 
-        return queue.elements[(queue.tail(queue) - 1 + queue.elements.length) % queue.elements.length];
+        return queue.elements[(queue.getTail(queue) - 1 + queue.elements.length) % queue.elements.length];
     }
     /*
             Pred: n > 0 && queue != null
@@ -154,7 +153,7 @@ public class ArrayQueueADT {
     public static Object remove(ArrayQueueADT queue) {
         Objects.requireNonNull(queue);
         assert queue.size > 0;
-        int newtail = (queue.tail(queue) - 1 + queue.elements.length) % queue.elements.length;
+        int newtail = (queue.getTail(queue) - 1 + queue.elements.length) % queue.elements.length;
         Object res = queue.elements[newtail];
         queue.elements[newtail] = null;
         queue.size--;
