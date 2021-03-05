@@ -23,7 +23,7 @@ public class ArrayQueueADT {
         }
     }
 
-    private int getTail(ArrayQueueADT queue) {
+    private static int getTail(ArrayQueueADT queue) {
         return (queue.head + queue.size) % queue.elements.length;
     }
 
