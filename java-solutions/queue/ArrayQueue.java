@@ -24,7 +24,7 @@ public class ArrayQueue {
         return (head + size) % elements.length;
     }
 
-    private Object[] copy(int length){
+    private Object[] copy(int length) {
         Object[] elementsnew = new Object[length];
         if (head < getTail() || size == 0) {
             System.arraycopy(elements, head, elementsnew, 0, size);
@@ -60,6 +60,7 @@ public class ArrayQueue {
         size--;
         return res;
     }
+
     /*
             Pred: n > 0
             Post: R == a[1] &&  && forall i == 1..n : a[i] == a'[i]
@@ -69,6 +70,7 @@ public class ArrayQueue {
 
         return elements[head];
     }
+
     /*
             Pred: true
             Post: R == size &&  && forall i == 1..n : a[i] == a'[i]
@@ -76,6 +78,7 @@ public class ArrayQueue {
     public int size() {
         return size;
     }
+
     /*
             Pred: true
             Post: R == (size == 0) &&  && forall i == 1..n : a[i] == a'[i]
@@ -83,6 +86,7 @@ public class ArrayQueue {
     public boolean isEmpty() {
         return size == 0;
     }
+
     /*
             Pred: true
             Post: head == 0 && tail == 0 && size == 0 && n == 2 && forall i = 1, 2 : a[i] == null
@@ -92,18 +96,20 @@ public class ArrayQueue {
         size = 0;
         elements = new Object[2];
     }
+
     /*
             Pred: true
             Post: R == [a[1], a[2], ... , a[n]] && forall i == 1..n : a[i] == a'[i]
     */
-    public Object[] toArray(){
+    public Object[] toArray() {
         return copy(size);
     }
+
     /*
             Pred: true
             Post: R == String([a[1], a[2], ... , a[n]) && forall i == 1..n : a[i] == a'[i]
     */
-    public String toStr(){
+    public String toStr() {
         StringBuilder str = new StringBuilder();
         str.append('[');
         for (int i = 0; i < size; i++) {
@@ -115,6 +121,7 @@ public class ArrayQueue {
         str.append(']');
         return str.toString();
     }
+
     /*
         Pred: el != null
         Post: n == n' + 1 && a[1] == e && forall i == 1..n' : a[i + 1] == a'[i]
@@ -126,6 +133,7 @@ public class ArrayQueue {
         elements[head] = el;
         size++;
     }
+
     /*
             Pred: n > 0
             Post: R == a[n] && forall i == 1..n : a[i] == a'[i]
@@ -135,6 +143,7 @@ public class ArrayQueue {
 
         return elements[(head + size - 1 + elements.length) % elements.length];
     }
+
     /*
             Pred: n > 0
             Post: n == n' - 1 && forall i == 1..n : a[i] == a'[i] && R == a'[n']
