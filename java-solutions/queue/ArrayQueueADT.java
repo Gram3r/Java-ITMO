@@ -1,8 +1,6 @@
 package queue;
 
-import java.util.Arrays;
 import java.util.Objects;
-
 /*Model:
     [a[1], a[2], a[3], .... , a[n]]
     n - размер очереди
@@ -88,71 +86,5 @@ public class ArrayQueueADT {
         queue.size = 0;
         queue.elements = new Object[2];
     }
-    /*
-            Pred: true && queue != null
-            Post: R == [a[1], a[2], ... , a[n]] && forall i == 1..n : a[i] == a'[i]
-    */
-    public static Object[] toArray(ArrayQueueADT queue){
-        Objects.requireNonNull(queue);
-        Object[] elementsnew = new Object[queue.size];
-        if (queue.head < queue.tail(queue) || queue.size == 0) {
-            System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.size);
         } else {
-            System.arraycopy(queue.elements, queue.head, elementsnew, 0, queue.elements.length - queue.head);
-            System.arraycopy(queue.elements, 0, elementsnew, queue.elements.length - queue.head, queue.tail(queue));
-        }
-        return elementsnew;
-    }
-    /*
-            Pred: true && queue != null
-            Post: R == String([a[1], a[2], ... , a[n]) && forall i == 1..n : a[i] == a'[i]
-    */
-    public static String toStr(ArrayQueueADT queue){
-        Objects.requireNonNull(queue);
-        StringBuilder str = new StringBuilder();
-        str.append('[');
-        for (int i = 0; i < queue.size; i++) {
-            if (i != 0) {
-                str.append(", ");
-            }
-            str.append(queue.elements[(queue.head + i) % queue.elements.length].toString());
-        }
-        str.append(']');
-        return str.toString();
-    }
-    /*
-        Pred: el != null && queue != null
-        Post: n == n' + 1 && a[1] == e && forall i == 1..n' : a[i + 1] == a'[i]
-    */
-    public static void push(ArrayQueueADT queue, Object el) {
-        Objects.requireNonNull(queue);
-        assert el != null;
-        ensureCapacity(queue, queue.size + 1);
-        queue.head = (queue.head - 1 + queue.elements.length) % queue.elements.length;
-        queue.elements[queue.head] = el;
-        queue.size++;
-    }
-    /*
-            Pred: n > 0 && queue != null
-            Post: R == a[n] && forall i == 1..n : a[i] == a'[i]
-    */
-    public static Object peek(ArrayQueueADT queue) {
-        Objects.requireNonNull(queue);
-        assert queue.size > 0;
-
-        return queue.elements[(queue.tail(queue) - 1 + queue.elements.length) % queue.elements.length];
-    }
-    /*
-            Pred: n > 0 && queue != null
-            Post: n == n' - 1 && forall i == 1..n : a[i] == a'[i] && R == a'[n']
-    */
-    public static Object remove(ArrayQueueADT queue) {
-        Objects.requireNonNull(queue);
-        assert queue.size > 0;
-        int newtail = (queue.tail(queue) - 1 + queue.elements.length) % queue.elements.length;
-        Object res = queue.elements[newtail];
-        queue.elements[newtail] = null;
-        queue.size--;
-        return res;
-    }
 }
