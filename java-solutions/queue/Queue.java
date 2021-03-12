@@ -74,19 +74,19 @@ public interface Queue {
     boolean isEmpty();
 
     /*
-            Pred: true
+            Pred: k > 0
             Post: R == [a[1], a[k], ... a[k * floor(n / k)]] &&  && forall i == 1..n : a[i] == a'[i]
     */
     Queue getNth(int n);
 
     /*
-        Pred: true
+        Pred: k > 0
         Post: forall i == 1..n : a[i] == a'[1 + (i - 1) * k]
     */
     void dropNth(int n);
 
     /*
-        Pred: true
+        Pred: k > 0
         Post: R == [a[1], a[k], ... a[k * floor(n' / k)]] && forall i == 1..n : a[i] == a'[1 + (i - 1) * k]
     */
     Queue removeNth(int n);
