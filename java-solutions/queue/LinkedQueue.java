@@ -54,12 +54,11 @@ public class LinkedQueue extends AbstractQueue {
     }
 
     protected Queue create_new() {
-        Queue queue = new LinkedQueue();
-        return queue;
+        return new LinkedQueue();
     }
 
-    private class Node {
-        private Object value;
+    private static class Node {
+        private final Object value;
         private Node next;
         private Node prev;
 

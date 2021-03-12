@@ -28,6 +28,7 @@ public abstract class AbstractQueue implements Queue {
     }
 
     public void dropNth(int n){
+        // :NOTE: можно вынести больше общего кода
         int temp_size = size;
         for (int i = 0; i < temp_size; i++) {
             Object obj = dequeue();
@@ -38,6 +39,7 @@ public abstract class AbstractQueue implements Queue {
     }
 
     public Queue removeNth(int n){
+        // :NOTE: можно за один проход
         Queue que = getNth(n);
         dropNth(n);
         return que;

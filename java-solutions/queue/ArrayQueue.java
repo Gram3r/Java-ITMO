@@ -45,8 +45,7 @@ public class ArrayQueue extends AbstractQueue {
     }
 
     protected Queue create_new() {
-        Queue queue = new ArrayQueue();
-        return queue;
+        return new ArrayQueue();
     }
 
 
