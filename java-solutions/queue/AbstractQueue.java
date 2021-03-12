@@ -1,5 +1,6 @@
 package queue;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public abstract class AbstractQueue implements Queue {
@@ -39,12 +40,14 @@ public abstract class AbstractQueue implements Queue {
         return res;
     }
 
+
     public String toStr(){
         StringBuilder str = new StringBuilder();
         str.append('[');
         toStrImpl(str);
         str.append(']');
         return str.toString();
+        //return Arrays.toString(toArray());
     }
 
 

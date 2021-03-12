@@ -55,7 +55,7 @@ public class ArrayQueue extends AbstractQueue {
     }
 
 
-    public String toStrImpl(StringBuilder str){
+    protected String toStrImpl(StringBuilder str){
         for (int i = 0; i < size; i++) {
             if (i != 0) {
                 str.append(", ");

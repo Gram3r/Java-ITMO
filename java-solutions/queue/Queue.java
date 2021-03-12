@@ -85,5 +85,5 @@ public interface Queue {
             Pred: true
             Post: R == String(a[1], a[2], ... , a[n]) && forall i == 1..n : a[i] == a'[i]
     */
-    public String toStr();
+    String toStr();
 }
