@@ -73,17 +73,21 @@ public interface Queue {
     */
     boolean isEmpty();
 
+    /*
+            Pred: true
+            Post: R == [a[1], a[k], ... a[k * floor(n / k)]] &&  && forall i == 1..n : a[i] == a'[i]
+    */
+    Queue getNth(int n);
 
     /*
         Pred: true
-        Post: R == [a[1], a[2], ... , a[n]] && forall i == 1..n : a[i] == a'[i]
+        Post: forall i == 1..n : a[i] == a'[1 + (i - 1) * k]
     */
-    Object[] toArray();
-
+    void dropNth(int n);
 
     /*
-            Pred: true
-            Post: R == String(a[1], a[2], ... , a[n]) && forall i == 1..n : a[i] == a'[i]
+        Pred: true
+        Post: R == [a[1], a[k], ... a[k * floor(n' / k)]] && forall i == 1..n : a[i] == a'[1 + (i - 1) * k]
     */
-    String toStr();
+    Queue removeNth(int n);
 }

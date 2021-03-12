@@ -31,38 +31,22 @@ public class ArrayQueue extends AbstractQueue {
     }
 
     public Object element() {
-        assert size > 0;
-
         return elements[head];
     }
 
     public Object peek() {
-        assert size > 0;
-
         return elements[(head + size - 1 + elements.length) % elements.length];
     }
 
 
-    public void clear() {
+    protected void clearImpl() {
         head = 0;
-        size = 0;
         elements = new Object[2];
     }
 
-
-    public Object[] toArray(){
-        return copy(size);
-    }
-
-
-    protected String toStrImpl(StringBuilder str){
-        for (int i = 0; i < size; i++) {
-            if (i != 0) {
-                str.append(", ");
-            }
-            str.append(elements[(head + i) % elements.length].toString());
-        }
-        return str.toString();
+    protected Queue create_new() {
+        Queue queue = new ArrayQueue();
+        return queue;
     }
 
 

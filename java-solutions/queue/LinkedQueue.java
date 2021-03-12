@@ -40,47 +40,23 @@ public class LinkedQueue extends AbstractQueue {
 
 
     public Object element() {
-        assert size > 0;
-
         return head.value;
     }
 
     public Object peek() {
-        assert size > 0;
-
         return tail.value;
     }
 
 
-    public void clear() {
-        size = 0;
+    protected void clearImpl() {
         head = null;
         tail = null;
     }
 
-    public Object[] toArray(){
-        Object[] array = new Object[size];
-        Node temp = head;
-        for (int i = 0; i < size; i++) {
-            array[i] = temp.value;
-            temp = temp.prev;
-        }
-        return array;
+    protected Queue create_new() {
+        Queue queue = new LinkedQueue();
+        return queue;
     }
-
-
-    protected String toStrImpl(StringBuilder str){
-        Node temp = head;
-        for (int i = 0; i < size; i++) {
-            if (i != 0) {
-                str.append(", ");
-            }
-            str.append(temp.value.toString());
-            temp = temp.prev;
-        }
-        return str.toString();
-    }
-
 
     private class Node {
         private Object value;

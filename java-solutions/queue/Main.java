@@ -1,10 +1,11 @@
 package queue;
 
+import javax.management.QueryEval;
+
 public class Main {
     public static void fill(Queue stack) {
-        for (int i = 5; i < 20; i+=2) {
-            stack.enqueue(i + 10);
-            stack.push(i + 11);
+        for (int i = 0; i < 20; i+=1) {
+            stack.enqueue(i);
         }
     }
 
@@ -18,10 +19,9 @@ public class Main {
     public static void main(String[] args) {
         Queue q = new LinkedQueue();
         fill(q);
-        Object[] arr = q.toArray();
-        for (int i = 0; i < arr.length; i++) {
-            System.out.println(arr[i].toString());
-        }
-        System.out.println(q.toStr());
+        Queue que = q.getNth(200);
+        dump(que);
+        System.out.println();
+        //dump(q);
     }
 }

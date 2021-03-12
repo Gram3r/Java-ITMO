@@ -14,6 +14,35 @@ public abstract class AbstractQueue implements Queue {
         return size == 0;
     }
 
+    public Queue getNth(int n){
+        Queue new_que = create_new();
+        int temp_size = size;
+        for (int i = 0; i < temp_size; i++) {
+            Object obj = this.dequeue();
+            if ((i + 1) % n == 0) {
+                new_que.enqueue(obj);
+            }
+            this.enqueue(obj);
+        }
+        return new_que;
+    }
+
+    public void dropNth(int n){
+        int temp_size = size;
+        for (int i = 0; i < temp_size; i++) {
+            Object obj = this.dequeue();
+            if ((i + 1) % n != 0) {
+                this.enqueue(obj);
+            }
+        }
+    }
+
+    public Queue removeNth(int n){
+        Queue que = getNth(n);
+        dropNth(n);
+        return que;
+    }
+
     public void enqueue(Object el){
         Objects.requireNonNull(el);
         enqueueImpl(el);
@@ -40,14 +69,9 @@ public abstract class AbstractQueue implements Queue {
         return res;
     }
 
-
-    public String toStr(){
-        StringBuilder str = new StringBuilder();
-        str.append('[');
-        toStrImpl(str);
-        str.append(']');
-        return str.toString();
-        //return Arrays.toString(toArray());
+    public void clear(){
+        size = 0;
+        clearImpl();
     }
 
 
@@ -59,5 +83,7 @@ public abstract class AbstractQueue implements Queue {
 
     protected abstract Object popImpl();
 
-    protected abstract String toStrImpl(StringBuilder str);
+    protected abstract void clearImpl();
+
+    protected abstract Queue create_new();
 }
