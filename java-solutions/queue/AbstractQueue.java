@@ -15,20 +15,46 @@ public abstract class AbstractQueue implements Queue {
 
     public void enqueue(Object el){
         Objects.requireNonNull(el);
-        size++;
-
         enqueueImpl(el);
+        size++;
+    }
+
+    public void push(Object el){
+        Objects.requireNonNull(el);
+        pushImpl(el);
+        size++;
     }
 
     public Object dequeue(){
         assert size > 0;
+        Object res = dequeueImpl();
         size--;
+        return res;
+    }
 
-        return dequeueImpl();
+    public Object pop(){
+        assert size > 0;
+        Object res = popImpl();
+        size--;
+        return res;
+    }
+
+    public String toStr(){
+        StringBuilder str = new StringBuilder();
+        str.append('[');
+        toStrImpl(str);
+        str.append(']');
+        return str.toString();
     }
 
 
     protected abstract void enqueueImpl(final Object el);
 
     protected abstract Object dequeueImpl();
+
+    protected abstract void pushImpl(final Object el);
+
+    protected abstract Object popImpl();
+
+    protected abstract String toStrImpl(StringBuilder str);
 }

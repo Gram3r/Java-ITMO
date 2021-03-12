@@ -1,32 +1,27 @@
 package queue;
 
 public class Main {
-    public static void fill(ArrayQueue stack) {
-        for (int i = 5; i < 20; i++) {
-            //stack.push(i);
+    public static void fill(Queue stack) {
+        for (int i = 5; i < 20; i+=2) {
             stack.enqueue(i + 10);
+            stack.push(i + 11);
         }
     }
 
-    public static void dump(ArrayQueue stack) {
+    public static void dump(Queue stack) {
         while (!stack.isEmpty()) {
             System.out.println(stack.size() + " " +
-                    stack.element() + " " + stack.dequeue());
+                    stack.peek() + " " + stack.dequeue());
         }
     }
 
     public static void main(String[] args) {
-        ArrayQueue q = new ArrayQueue();
-        q.enqueue(5);
-        q.enqueue(4);
-        q.enqueue(3);
-        q.enqueue(2);
-        q.enqueue(1);
-        System.out.println(q.dequeue());
-
-        System.out.println(q.element());
-
-        System.out.println(q.dequeue());
-        System.out.println(q.dequeue());
+        Queue q = new LinkedQueue();
+        fill(q);
+        Object[] arr = q.toArray();
+        for (int i = 0; i < arr.length; i++) {
+            System.out.println(arr[i].toString());
+        }
+        System.out.println(q.toStr());
     }
 }

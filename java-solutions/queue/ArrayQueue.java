@@ -5,14 +5,28 @@ public class ArrayQueue extends AbstractQueue {
     private Object[] elements = new Object[2];
 
     protected void enqueueImpl(Object el) {
-        ensureCapacity(size);
+        ensureCapacity(size + 1);
         elements[getTail()] = el;
     }
+
+    protected void pushImpl(Object el) {
+        ensureCapacity(size + 1);
+        head = (head - 1 + elements.length) % elements.length;
+        elements[head] = el;
+    }
+
 
     protected Object dequeueImpl() {
         Object res = elements[head];
         elements[head] = null;
         head = (head + 1) % elements.length;
+        return res;
+    }
+
+    protected Object popImpl() {
+        int newtail = (head + size - 1 + elements.length) % elements.length;
+        Object res = elements[newtail];
+        elements[newtail] = null;
         return res;
     }
 
@@ -22,10 +36,33 @@ public class ArrayQueue extends AbstractQueue {
         return elements[head];
     }
 
+    public Object peek() {
+        assert size > 0;
+
+        return elements[(head + size - 1 + elements.length) % elements.length];
+    }
+
+
     public void clear() {
         head = 0;
         size = 0;
         elements = new Object[2];
+    }
+
+
+    public Object[] toArray(){
+        return copy(size);
+    }
+
+
+    public String toStrImpl(StringBuilder str){
+        for (int i = 0; i < size; i++) {
+            if (i != 0) {
+                str.append(", ");
+            }
+            str.append(elements[(head + i) % elements.length].toString());
+        }
+        return str.toString();
     }
 
 
@@ -37,13 +74,13 @@ public class ArrayQueue extends AbstractQueue {
     }
 
     private int getTail() {
-        return (head + size - 1 + elements.length) % elements.length;
+        return (head + size) % elements.length;
     }
 
     private Object[] copy(int length) {
         Object[] elementsnew = new Object[length];
         if (head < getTail() || size == 0) {
-            System.arraycopy(elements, head, elementsnew, 0, size - 1);
+            System.arraycopy(elements, head, elementsnew, 0, size);
         } else {
             System.arraycopy(elements, head, elementsnew, 0, elements.length - head);
             System.arraycopy(elements, 0, elementsnew, elements.length - head, getTail());
