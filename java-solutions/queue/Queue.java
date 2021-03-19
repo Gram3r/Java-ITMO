@@ -81,14 +81,14 @@ public interface Queue {
 
     /*
         Pred: k > 0
-        Post: forall i == 1..n : a[i] == a'[1 + (i - 1) * k]
+        Post: forall i == 1..n : a[i] == a'[i + i / k]
     */
     // :NOTE: наоборот
     void dropNth(int n);
 
     /*
         Pred: k > 0
-        Post: R == [a[1], a[k], ... a[k * floor(n' / k)]] && forall i == 1..n : a[i] == a'[1 + (i - 1) * k]
+        Post: R == [a[1], a[k], ... a[k * floor(n' / k)]] && forall i == 1..n : a[i] == a'[i + i / k]
     */
     // :NOTE: наоборот
     Queue removeNth(int n);

@@ -4,24 +4,23 @@ import javax.management.QueryEval;
 
 public class Main {
     public static void fill(Queue stack) {
-        for (int i = 0; i < 20; i+=1) {
+        for (int i = 1; i < 9; i+=1) {
             stack.enqueue(i);
         }
     }
 
     public static void dump(Queue stack) {
         while (!stack.isEmpty()) {
-            System.out.println(stack.size() + " " +
-                    stack.peek() + " " + stack.dequeue());
+            System.out.println(stack.dequeue());
         }
     }
 
     public static void main(String[] args) {
         Queue q = new LinkedQueue();
         fill(q);
-        Queue que = q.getNth(200);
+        Queue que = q.getNth(3);
         dump(que);
-        System.out.println();
+        //System.out.println();
         //dump(q);
     }
 }

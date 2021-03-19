@@ -53,7 +53,7 @@ public class LinkedQueue extends AbstractQueue {
         tail = null;
     }
 
-    protected Queue create_new() {
+    protected Queue createNew() {
         return new LinkedQueue();
     }
 

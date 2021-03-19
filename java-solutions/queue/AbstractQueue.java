@@ -1,6 +1,5 @@
 package queue;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 public abstract class AbstractQueue implements Queue {
@@ -15,34 +14,32 @@ public abstract class AbstractQueue implements Queue {
     }
 
     public Queue getNth(int n){
-        Queue new_que = create_new();
-        int temp_size = size;
-        for (int i = 0; i < temp_size; i++) {
-            Object obj = dequeue();
-            if ((i + 1) % n == 0) {
-                new_que.enqueue(obj);
-            }
-            enqueue(obj);
-        }
-        return new_que;
+        return changeNth(n, true);
     }
 
     public void dropNth(int n){
         // :NOTE: можно вынести больше общего кода
-        int temp_size = size;
-        for (int i = 0; i < temp_size; i++) {
-            Object obj = dequeue();
-            if ((i + 1) % n != 0) {
-                enqueue(obj);
-            }
-        }
+        changeNth(n, false);
     }
 
     public Queue removeNth(int n){
-        // :NOTE: можно за один проход
-        Queue que = getNth(n);
-        dropNth(n);
-        return que;
+        return changeNth(n, false);
+    }
+
+
+    private Queue changeNth(int n, boolean first) {
+        Queue newQue = createNew();
+        int tempSize = size;
+        for (int i = 0; i < tempSize; i++) {
+            Object obj = dequeue();
+            if ((i + 1) % n == 0) {
+                newQue.enqueue(obj);
+            }
+            if (first || (i + 1) % n != 0) {
+                enqueue(obj);
+            }
+        }
+        return newQue;
     }
 
     public void enqueue(Object el){
@@ -87,5 +84,5 @@ public abstract class AbstractQueue implements Queue {
 
     protected abstract void clearImpl();
 
-    protected abstract Queue create_new();
+    protected abstract Queue createNew();
 }
