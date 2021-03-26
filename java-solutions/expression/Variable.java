@@ -26,7 +26,7 @@ public class Variable<T> implements TripleExpression<T> {
     public boolean equals(Object second) {
         return second != null
                 && second.getClass() == getClass()
-                && this.name.equals(((Variable)second).name);
+                && this.name.equals(((Variable <?>)second).name);
     }
 
     @Override
