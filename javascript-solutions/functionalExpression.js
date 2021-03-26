@@ -2,6 +2,7 @@
 
 let operator = (f, ...inner_oper) => (...args) => (f(...inner_oper.map(value => value(...args))));
 
+// let madd = operator((a, b, c) => a * b + c);
 let madd = (x, y, z) => operator((a, b, c) => a * b + c, x, y, z);
 
 let add = (x, y) => operator((a, b) => a + b, x, y);
@@ -49,8 +50,8 @@ const variableTokens = {
 }
 
 let variable = (str) => {
-    let index = variableTokens[str]
-    return (...args) => args[index]
+    let index = variableTokens[str];
+    return (...args) => args[index];
 }
 
 let res =
@@ -70,22 +71,26 @@ for (let i = 0; i < 10; i++) {
 function parse(str) {
     let exp = [];
     let stack = str.split(' ');
+
+    function apply(i) {
+        if (i in operatorTokens) {
+            let args = exp.splice(-operatorTokens[i].length);
+            return operatorTokens[i](...args)
+        } else if (i in variableTokens) {
+            return variable(i)
+        } else if (i in constTokens) {
+            return constTokens[i]
+        } else {
+            return cnst(Number(i))
+        }
+    }
+
     for (const i of stack) {
+        // :NOTE: !i
         if (!i) {
             continue;
         }
-        let pushed;
-        if (i in operatorTokens) {
-            let temp = exp.splice(exp.length - operatorTokens[i].length);
-            pushed = operatorTokens[i](...temp)
-        } else if (i in variableTokens) {
-            pushed = variable(i)
-        } else if (i in constTokens) {
-            pushed = constTokens[i]
-        } else {
-            pushed = cnst(Number(i))
-        }
-        exp.push(pushed);
+        exp.push(apply(i));
     }
     return exp[0];
 }
