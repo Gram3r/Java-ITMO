@@ -2,6 +2,7 @@
 
 let operator = (f, ...inner_oper) => (...args) => (f(...inner_oper.map(value => value(...args))));
 
+let madd = (x, y, z) => operator((a, b, c) => a * b + c, x, y, z);
 
 let add = (x, y) => operator((a, b) => a + b, x, y);
 
@@ -12,6 +13,10 @@ let divide = (x, y) => operator((a, b) => a / b, x, y);
 let multiply = (x, y) => operator((a, b) => a * b, x, y);
 
 let negate = (x) => operator((y) => -y, x);
+
+let floor = (x) => operator((y) => Math.floor(y), x);
+
+let ceil = (x) => operator((y) => Math.ceil(y), x);
 
 let cnst = (x) => () => x;
 
@@ -24,11 +29,17 @@ const constTokens = {
 }
 
 const operatorTokens = {
+    "*+" : madd,
+    "madd" : madd,
     "+" : add,
     "-" : subtract,
     "/" : divide,
     "*" : multiply,
-    "negate" : negate
+    "negate" : negate,
+    "floor" : floor,
+    "ceil" : ceil,
+    "_" : floor,
+    "^" : ceil
 }
 
 const variableTokens = {
@@ -37,24 +48,23 @@ const variableTokens = {
     "z" : 2
 }
 
-let variable = (str) => (...args) => {return args[variableTokens[str]]};
+let variable = (str) => {
+    let index = variableTokens[str]
+    return (...args) => args[index]
+}
 
 let res =
-    add(
+    madd(
         subtract(
-            multiply(
-                variable('x'),
-                variable('x')
-            ),
-            multiply(
-                cnst(2),
-                variable('x')
-            )
+            variable('x'),
+            variable('y'),
         ),
-        cnst(1))
+        variable('z'),
+        one
+    )
 
 for (let i = 0; i < 10; i++) {
-    println(i + ': ' + res(i))
+    println(i + ': ' + res(i, i, i))
 }
 
 function parse(str) {
@@ -64,16 +74,18 @@ function parse(str) {
         if (!i) {
             continue;
         }
+        let pushed;
         if (i in operatorTokens) {
             let temp = exp.splice(exp.length - operatorTokens[i].length);
-            exp.push(operatorTokens[i](...temp));
+            pushed = operatorTokens[i](...temp)
         } else if (i in variableTokens) {
-            exp.push(variable(i));
+            pushed = variable(i)
         } else if (i in constTokens) {
-            exp.push(constTokens[i]);
+            pushed = constTokens[i]
         } else {
-            exp.push(cnst(Number(i)))
+            pushed = cnst(Number(i))
         }
+        exp.push(pushed);
     }
     return exp[0];
 }
