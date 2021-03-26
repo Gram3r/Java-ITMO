@@ -1,25 +1,24 @@
 "use strict";
 
-let operator = (f, ...inner_oper) => (...args) => (f(...inner_oper.map(value => value(...args))));
+let operator = f => (...inner_oper) => (...args) => f(...inner_oper.map(value => value(...args)));
 
-// let madd = operator((a, b, c) => a * b + c);
-let madd = (x, y, z) => operator((a, b, c) => a * b + c, x, y, z);
+let madd = operator((a, b, c) => a * b + c);
 
-let add = (x, y) => operator((a, b) => a + b, x, y);
+let add = operator((a, b) => a + b);
 
-let subtract = (x, y) => operator((a, b) => a - b, x, y);
+let subtract = operator((a, b) => a - b);
 
-let divide = (x, y) => operator((a, b) => a / b, x, y);
+let divide = operator((a, b) => a / b);
 
-let multiply = (x, y) => operator((a, b) => a * b, x, y);
+let multiply = operator((a, b) => a * b);
 
-let negate = (x) => operator((y) => -y, x);
+let negate = operator((y) => -y);
 
-let floor = (x) => operator((y) => Math.floor(y), x);
+let floor = operator((y) => Math.floor(y));
 
-let ceil = (x) => operator((y) => Math.ceil(y), x);
+let ceil = operator((y) => Math.ceil(y));
 
-let cnst = (x) => () => x;
+let cnst = x => () => x;
 
 const one = cnst(1);
 const two = cnst(2);
@@ -30,18 +29,19 @@ const constTokens = {
 }
 
 const operatorTokens = {
-    "*+" : madd,
-    "madd" : madd,
-    "+" : add,
-    "-" : subtract,
-    "/" : divide,
-    "*" : multiply,
-    "negate" : negate,
-    "floor" : floor,
-    "ceil" : ceil,
-    "_" : floor,
-    "^" : ceil
+    "*+" : [madd, 3],
+    "madd" : [madd, 3],
+    "+" : [add, 2],
+    "-" : [subtract, 2],
+    "/" : [divide, 2],
+    "*" : [multiply, 2],
+    "negate" : [negate, 1],
+    "floor" : [floor, 1],
+    "ceil" : [ceil, 1],
+    "_" : [floor, 1],
+    "^" : [ceil, 1]
 }
+
 
 const variableTokens = {
     "x" : 0,
@@ -70,12 +70,12 @@ for (let i = 0; i < 10; i++) {
 
 function parse(str) {
     let exp = [];
-    let stack = str.split(' ');
+    let stack = str.split(' ').filter(c => c !== "");
 
     function apply(i) {
         if (i in operatorTokens) {
-            let args = exp.splice(-operatorTokens[i].length);
-            return operatorTokens[i](...args)
+            let operator = operatorTokens[i]
+            return operator[0](... exp.splice(-operator[1]))
         } else if (i in variableTokens) {
             return variable(i)
         } else if (i in constTokens) {
@@ -86,10 +86,6 @@ function parse(str) {
     }
 
     for (const i of stack) {
-        // :NOTE: !i
-        if (!i) {
-            continue;
-        }
         exp.push(apply(i));
     }
     return exp[0];
