@@ -14,6 +14,7 @@ let multiply = operator((a, b) => a * b);
 
 let negate = operator((y) => -y);
 
+// :NOTE: ??
 let floor = operator((y) => Math.floor(y));
 
 let ceil = operator((y) => Math.ceil(y));
