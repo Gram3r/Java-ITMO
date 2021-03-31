@@ -202,10 +202,10 @@ prototypeChangesForOperator(HMean ,
     (a, b) => 2 / (1 / a + 1 / b),
     "hmean",
     function(parameter, firstOp, secondOp) {return new Divide(
-        new Multiply(
-            new Const(2),
-            new Multiply(firstOp, secondOp)),
-        new Add(firstOp, secondOp)).diff(parameter)},
+        new Const(2),
+        new Add(
+            new Divide(one, firstOp),
+            new Divide(one, secondOp))).diff(parameter)},
     function(firstOp, secondOp) {
         if (firstOp.toString() === "0") {
             return zero;
