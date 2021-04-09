@@ -1,32 +1,27 @@
 "use strict";
 
-
-function prototypeChanges(nameOfOperator, toString, evaluate, diff, simplify) {
-    nameOfOperator.prototype.toString = toString;
-    nameOfOperator.prototype.evaluate = evaluate;
-    nameOfOperator.prototype.diff = diff;
-    nameOfOperator.prototype.simplify = simplify;
-    nameOfOperator.prototype.constructor = nameOfOperator
+function fabricForOperator(constructorEx, toString, evaluate, diff, simplify) {
+    constructorEx.prototype.toString = toString;
+    constructorEx.prototype.evaluate = evaluate;
+    constructorEx.prototype.diff = diff;
+    constructorEx.prototype.simplify = simplify;
+    return constructorEx
 }
 
-function prototypeChangesForOperator(nameOfOperator, func, symbol, operDiffer, operSimplify) {
-    nameOfOperator.prototype = Object.create(Operator.prototype);
-    nameOfOperator.prototype.func = func;
-    nameOfOperator.prototype.symbol = symbol;
-    nameOfOperator.prototype.operDiffer = operDiffer;
-    nameOfOperator.prototype.operSimplify = operSimplify;
+function fabricForOperations(func, symbol, operDiffer, operSimplify) {
+    let constructorOp = function(...args) {
+        Operator.call(this, ...args)
+    }
+    constructorOp.prototype = Object.create(Operator.prototype);
+    constructorOp.prototype.func = func;
+    constructorOp.prototype.symbol = symbol;
+    constructorOp.prototype.operDiffer = operDiffer;
+    constructorOp.prototype.operSimplify = operSimplify;
+    return constructorOp
 }
 
-
-
-
-function Const(value) {
-    this.value = value;
-}
-let zero = new Const(0)
-let one = new Const(1)
-
-prototypeChanges(Const,
+const Const = fabricForOperator(
+    function(value) {this.value = value},
     function() {return `${this.value}`;},
     function() {return this.value;},
     function(parameter) {return zero},
@@ -35,38 +30,28 @@ prototypeChanges(Const,
 
 
 
-
-function Variable(name) {
-    this.name = name
-    this.index = variableTokens.get(name)
-}
-
-prototypeChanges(Variable,
-    function() {return this.name;},
-    function(...args) {return args[this.index];},
-    function(parameter) {return parameter === this.name ? one : zero},
+const Variable = fabricForOperator(
+    function(str) {this.str = str; this.ind  = variableTokens.get(str)},
+    function() {return this.str;},
+    function(...args) {return args[this.ind];},
+    function(parameter) {return parameter === this.str ? one : zero},
     function() {return this}
 )
 
 
-
-
-
-function Operator(...innerOperators) {
-    this.inner = innerOperators;
-}
-prototypeChanges(Operator,
+const Operator = fabricForOperator(
+    function(...args) {this.args = args},
     function() {
-        return this.inner.join(" ") + " " + this.symbol;
+        return this.args.join(" ") + ` ${this.symbol}`;
     },
     function(...args) {
-        return this.func(...this.inner.map(value => value.evaluate(...args)))
+        return this.func(...this.args.map(value => value.evaluate(...args)))
     },
     function(parameter) {
-        return this.operDiffer(parameter, ...this.inner)
+        return this.operDiffer(parameter, ...this.args)
     },
     function() {
-        let innerSimplified = this.inner.map(value => value.simplify())
+        let innerSimplified = this.args.map(value => value.simplify())
         if (innerSimplified.every(function(op) {return op instanceof Const})) {
             return new Const(this.func(...innerSimplified.map(value => value.evaluate())));
         } else {
@@ -76,16 +61,11 @@ prototypeChanges(Operator,
 
 
 
-function Add(firstOp, secondOp) {
-    Operator.call(this,
-        firstOp,
-        secondOp)
-}
-prototypeChangesForOperator(Add,
+const Add = fabricForOperations(
     (a, b) => a + b,
     "+",
-    function(parameter, firstOp, secondOp) {return new Add(firstOp.diff(parameter), secondOp.diff(parameter))},
-    function(firstOp, secondOp) {
+    (parameter, firstOp, secondOp) => new Add(firstOp.diff(parameter), secondOp.diff(parameter)),
+    (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
             return secondOp;
         } else if (secondOp.toString() === "0") {
@@ -97,16 +77,11 @@ prototypeChangesForOperator(Add,
 
 
 
-function Subtract(firstOp, secondOp) {
-    Operator.call(this,
-        firstOp,
-        secondOp)
-}
-prototypeChangesForOperator(Subtract,
+const Subtract = fabricForOperations(
     (a, b) => a - b,
     "-",
-    function(parameter, firstOp, secondOp) {return new Subtract(firstOp.diff(parameter), secondOp.diff(parameter))},
-    function(firstOp, secondOp) {
+    (parameter, firstOp, secondOp) => new Subtract(firstOp.diff(parameter), secondOp.diff(parameter)),
+    (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
             return new Negate(secondOp);
         } else if (secondOp.toString() === "0") {
@@ -119,22 +94,13 @@ prototypeChangesForOperator(Subtract,
 
 
 
-function Multiply(firstOp, secondOp) {
-    Operator.call(this,
-        firstOp,
-        secondOp)
-}
-prototypeChangesForOperator(Multiply,
+const Multiply = fabricForOperations(
     (a, b) => a * b,
     "*",
-    function (parameter, firstOp, secondOp) {return new Add(
-        new Multiply(
-            firstOp.diff(parameter),
-            secondOp),
-        new Multiply(
-            firstOp,
-            secondOp.diff(parameter)))},
-    function(firstOp, secondOp) {
+    (parameter, firstOp, secondOp) => new Add(
+        new Multiply(firstOp.diff(parameter), secondOp),
+        new Multiply(firstOp, secondOp.diff(parameter))),
+    (firstOp, secondOp) => {
         if (firstOp.toString() === "0" || secondOp.toString() === "0") {
             return zero;
         } else if (firstOp.toString() === "1") {
@@ -149,21 +115,24 @@ prototypeChangesForOperator(Multiply,
 
 
 
-function Divide(firstOp, secondOp) {
-    Operator.call(this,
-        firstOp,
-        secondOp)
-}
-prototypeChangesForOperator(Divide,
+const Divide = fabricForOperations(
     (a, b) => a / b,
     "/",
-    function (parameter, firstOp, secondOp) {return new Divide(
+    (parameter, firstOp, secondOp) => new Divide(
         new Subtract(
             new Multiply(firstOp.diff(parameter), secondOp),
             new Multiply(firstOp, secondOp.diff(parameter))),
         new Multiply(secondOp, secondOp)
-    )},
-    function(firstOp, secondOp) {
+    ),
+    (firstOp, secondOp) => {
+        if (secondOp instanceof Multiply) {
+            if (secondOp.args[0].toString() === firstOp.toString()) {
+                return new Divide(one, secondOp.args[1])
+            }
+            if (secondOp.args[1].toString() === firstOp.toString()) {
+                return new Divide(one, secondOp.args[0])
+            }
+        }
         if (firstOp.toString() === "0") {
             return zero;
         } else {
@@ -174,15 +143,11 @@ prototypeChangesForOperator(Divide,
 
 
 
-function Negate(oper) {
-    Operator.call(this,
-        oper)
-}
-prototypeChangesForOperator(Negate,
+const Negate = fabricForOperations(
     (a) => -a,
     "negate",
-    function(parameter, oper) {return new Negate(oper.diff(parameter))},
-    function(oper) {
+    (parameter, oper) => new Negate(oper.diff(parameter)),
+    (oper) => {
         if (oper.toString() === "0") {
             return zero
         } else {
@@ -193,20 +158,15 @@ prototypeChangesForOperator(Negate,
 
 
 
-function HMean (firstOp, secondOp) {
-    Operator.call(this,
-        firstOp,
-        secondOp)
-}
-prototypeChangesForOperator(HMean ,
+const HMean = fabricForOperations(
     (a, b) => 2 / (1 / a + 1 / b),
     "hmean",
-    function(parameter, firstOp, secondOp) {return new Divide(
-        new Const(2),
-        new Add(
-            new Divide(one, firstOp),
-            new Divide(one, secondOp))).diff(parameter)},
-    function(firstOp, secondOp) {
+    (parameter, firstOp, secondOp) => new Divide(
+        new Multiply(
+            new Const(2),
+            new Multiply(firstOp, secondOp)),
+        new Add(firstOp, secondOp)).diff(parameter),
+    (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
             return zero;
         } else if (secondOp.toString() === "0") {
@@ -219,18 +179,13 @@ prototypeChangesForOperator(HMean ,
 
 
 
-function Hypot(firstOp, secondOp) {
-    Operator.call(this,
-        firstOp,
-        secondOp)
-}
-prototypeChangesForOperator(Hypot,
+const Hypot = fabricForOperations(
     (a, b) => a * a + b * b,
     "hypot",
-    function(parameter, firstOp, secondOp) {return new Add(
+    (parameter, firstOp, secondOp) => new Add(
         new Multiply(firstOp, firstOp),
-        new Multiply(secondOp, secondOp)).diff(parameter)},
-    function(firstOp, secondOp) {
+        new Multiply(secondOp, secondOp)).diff(parameter),
+    (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
             return secondOp;
         } else if (secondOp.toString() === "0") {
@@ -240,6 +195,9 @@ prototypeChangesForOperator(Hypot,
         }
     })
 
+
+let zero = new Const(0)
+let one = new Const(1)
 
 
 const variableTokens = new Map([
@@ -274,7 +232,7 @@ function parse(str) {
     function apply(i) {
         if (operatorTokens.has(i)) {
             let operator = operatorTokens.get(i)
-            return new operator(... exp.splice(-operator.length))
+            return new operator(... exp.splice(-operator.prototype.func.length))
         } else if (variableTokens.has(i)) {
             return new Variable(i)
         } else if (constTokens.has(i)) {
