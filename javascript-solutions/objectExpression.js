@@ -12,7 +12,7 @@ function fabricForOperations(func, symbol, operDiffer, operSimplify) {
     let constructorOp = function(...args) {
         Operator.call(this, ...args)
     }
-    constructorOp.prototype = Object.create(Operator.prototype);
+    constructorOp.prototype = Object.create(Operator);
     constructorOp.prototype.func = func;
     constructorOp.prototype.symbol = symbol;
     constructorOp.prototype.operDiffer = operDiffer;
