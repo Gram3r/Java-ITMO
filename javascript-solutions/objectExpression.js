@@ -48,7 +48,7 @@ const Operator = fabricForOperator(
         return this.func(...this.args.map(value => value.evaluate(...args)))
     },
     function(parameter) {
-        return this.operDiffer(parameter, ...this.args)
+        return this.operDiffer(parameter, ...this.args, ...this.args.map(val => val.diff(parameter)))
     },
     function() {
         let innerSimplified = this.args.map(value => value.simplify())
@@ -64,7 +64,7 @@ const Operator = fabricForOperator(
 const Add = fabricForOperations(
     (a, b) => a + b,
     "+",
-    (parameter, firstOp, secondOp) => new Add(firstOp.diff(parameter), secondOp.diff(parameter)),
+    (parameter, f, s, fd, sd) => new Add(fd, sd),
     (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
             return secondOp;
@@ -80,7 +80,7 @@ const Add = fabricForOperations(
 const Subtract = fabricForOperations(
     (a, b) => a - b,
     "-",
-    (parameter, firstOp, secondOp) => new Subtract(firstOp.diff(parameter), secondOp.diff(parameter)),
+    (parameter, f, s, fd, sd) => new Subtract(fd, sd),
     (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
             return new Negate(secondOp);
@@ -97,9 +97,9 @@ const Subtract = fabricForOperations(
 const Multiply = fabricForOperations(
     (a, b) => a * b,
     "*",
-    (parameter, firstOp, secondOp) => new Add(
-        new Multiply(firstOp.diff(parameter), secondOp),
-        new Multiply(firstOp, secondOp.diff(parameter))),
+    (parameter, f, s, fd, sd) => new Add(
+        new Multiply(fd, s),
+        new Multiply(f, sd)),
     (firstOp, secondOp) => {
         if (firstOp.toString() === "0" || secondOp.toString() === "0") {
             return zero;
@@ -118,11 +118,11 @@ const Multiply = fabricForOperations(
 const Divide = fabricForOperations(
     (a, b) => a / b,
     "/",
-    (parameter, firstOp, secondOp) => new Divide(
+    (parameter, f, s, fd, sd) => new Divide(
         new Subtract(
-            new Multiply(firstOp.diff(parameter), secondOp),
-            new Multiply(firstOp, secondOp.diff(parameter))),
-        new Multiply(secondOp, secondOp)
+            new Multiply(fd, s),
+            new Multiply(f, sd)),
+        new Multiply(s, s)
     ),
     (firstOp, secondOp) => {
         if (secondOp instanceof Multiply) {
@@ -146,7 +146,7 @@ const Divide = fabricForOperations(
 const Negate = fabricForOperations(
     (a) => -a,
     "negate",
-    (parameter, oper) => new Negate(oper.diff(parameter)),
+    (parameter, f, fd) => new Negate(fd),
     (oper) => {
         if (oper.toString() === "0") {
             return zero
@@ -161,11 +161,11 @@ const Negate = fabricForOperations(
 const HMean = fabricForOperations(
     (a, b) => 2 / (1 / a + 1 / b),
     "hmean",
-    (parameter, firstOp, secondOp) => new Divide(
+    (parameter, f, s) => new Divide(
         new Multiply(
             new Const(2),
-            new Multiply(firstOp, secondOp)),
-        new Add(firstOp, secondOp)).diff(parameter),
+            new Multiply(f, s)),
+        new Add(f, s)).diff(parameter),
     (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
             return zero;
