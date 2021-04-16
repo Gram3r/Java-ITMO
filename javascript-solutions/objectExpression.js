@@ -1,12 +1,25 @@
 "use strict";
 
-function fabricForOperator(constructorExpr, toString, prefix, postfix, evaluate, diff) {
-    constructorExpr.prototype.toString = toString;
-    constructorExpr.prototype.prefix = prefix;
-    constructorExpr.prototype.postfix = postfix;
-    constructorExpr.prototype.evaluate = evaluate;
-    constructorExpr.prototype.diff = diff;
-    return constructorExpr
+
+
+let abstractOperator = function (...args) {
+    this.args = args;
+    this.toString = () => "" + args[0];
+    this.prefix = this.toString;
+    this.postfix = this.toString;
+    this.evaluate = () => args[0];
+    this.diff = () => zero;
+}
+
+function fabricForOperations(func, symbol, operDiffer) {
+    let constructorOp = function(...args) {
+        Operator.apply(this, args)
+    }
+    constructorOp.prototype = Object.create(Operator);
+    constructorOp.prototype.func = func;
+    constructorOp.prototype.symbol = symbol;
+    constructorOp.prototype.operDiffer = operDiffer;
+    return constructorOp
 }
 
 function fabricForError(message) {
@@ -17,57 +30,24 @@ function fabricForError(message) {
     return ExprError
 }
 
-function fabricForOperations(func, symbol, operDiffer) {
-    let constructorOp = function(...args) {
-        Operator.call(this, ...args)
-    }
-    constructorOp.prototype = Object.create(Operator.prototype);
-    constructorOp.prototype.func = func;
-    constructorOp.prototype.symbol = symbol;
-    constructorOp.prototype.operDiffer = operDiffer;
-    return constructorOp
+const Const = function(value) {
+    abstractOperator.apply(this, [value]);
 }
 
-const Const = fabricForOperator(
-    function(value) {this.value = value},
-    function() {return `${this.value}`;},
-    function() {return `${this.value}`;},
-    function() {return `${this.value}`;},
-    function() {return this.value;},
-    function(parameter) {return zero}
-)
+const Variable = function(str) {
+    abstractOperator.apply(this, [str, variableTokens.get(str)]);
+    this.evaluate = function(...arg) {return arg[this.args[1]]}
+    this.diff = function(parameter) {return (parameter === str ? one : zero)}
+}
 
-
-
-const Variable = fabricForOperator(
-    function(str) {this.str = str; this.ind  = variableTokens.get(str)},
-    function() {return this.str;},
-    function() {return this.str;},
-    function() {return this.str;},
-    function(...args) {return args[this.ind];},
-    function(parameter) {return parameter === this.str ? one : zero}
-)
-
-
-const Operator = fabricForOperator(
-    function(...args) {this.args = args},
-    function() {
-        return this.args.join(" ") + ` ${this.symbol}`;
-    },
-    function() {
-        return `(${this.symbol} ` + this.args.map(val => val.prefix()).join(" ") + ')';
-    },
-    function() {
-        return '(' + this.args.map(val => val.postfix()).join(" ") + ` ${this.symbol})`;
-    },
-    function(...args) {
-        return this.func(...this.args.map(value => value.evaluate(...args)))
-    },
-    function(parameter) {
-        return this.operDiffer(parameter, ...this.args)
-    },
-)
-
+const Operator = function(...args) {
+    abstractOperator.apply(this, args);
+    this.toString = function() {return this.args.join(" ") + ` ${this.symbol}`;}
+    this.prefix = function() {return `(${this.symbol} ` + this.args.map(val => val.prefix()).join(" ") + ')'}
+    this.postfix = function() {return '(' + this.args.map(val => val.postfix()).join(" ") + ` ${this.symbol})`}
+    this.evaluate = function(...arg) {return this.func(...this.args.map(value => value.evaluate(...arg)))}
+    this.diff = function (parameter) {return this.operDiffer(parameter, ...this.args)}
+}
 
 
 const Add = fabricForOperations(
@@ -347,9 +327,3 @@ const LengthOfArgumentsError = fabricForError("Too much arguments")
 
 const EmptyString = fabricForError("Empty expression")
 
-
-// let print = console.log
-// let expr1 = parsePostfix('(x 2 +');
-// //let expr2 = parsePrefix('x')
-// print(expr1.prefix())
-// //print(expr2.postfix()))
