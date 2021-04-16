@@ -1,31 +1,40 @@
 "use strict";
 
-function fabricForOperator(constructorEx, toString, evaluate, diff, simplify) {
-    constructorEx.prototype.toString = toString;
-    constructorEx.prototype.evaluate = evaluate;
-    constructorEx.prototype.diff = diff;
-    constructorEx.prototype.simplify = simplify;
-    return constructorEx
+function fabricForOperator(constructorExpr, toString, prefix, postfix, evaluate, diff) {
+    constructorExpr.prototype.toString = toString;
+    constructorExpr.prototype.prefix = prefix;
+    constructorExpr.prototype.postfix = postfix;
+    constructorExpr.prototype.evaluate = evaluate;
+    constructorExpr.prototype.diff = diff;
+    return constructorExpr
 }
 
-function fabricForOperations(func, symbol, operDiffer, operSimplify) {
+function fabricForError(message) {
+    let ExprError = function(expr) {
+        this.message = message + " : " + expr;
+    }
+    ExprError.prototype = Object.create(Error.prototype);
+    return ExprError
+}
+
+function fabricForOperations(func, symbol, operDiffer) {
     let constructorOp = function(...args) {
         Operator.call(this, ...args)
     }
-    constructorOp.prototype = Object.create(Operator);
+    constructorOp.prototype = Object.create(Operator.prototype);
     constructorOp.prototype.func = func;
     constructorOp.prototype.symbol = symbol;
     constructorOp.prototype.operDiffer = operDiffer;
-    constructorOp.prototype.operSimplify = operSimplify;
     return constructorOp
 }
 
 const Const = fabricForOperator(
     function(value) {this.value = value},
     function() {return `${this.value}`;},
+    function() {return `${this.value}`;},
+    function() {return `${this.value}`;},
     function() {return this.value;},
-    function(parameter) {return zero},
-    function() {return this}
+    function(parameter) {return zero}
 )
 
 
@@ -33,9 +42,10 @@ const Const = fabricForOperator(
 const Variable = fabricForOperator(
     function(str) {this.str = str; this.ind  = variableTokens.get(str)},
     function() {return this.str;},
+    function() {return this.str;},
+    function() {return this.str;},
     function(...args) {return args[this.ind];},
-    function(parameter) {return parameter === this.str ? one : zero},
-    function() {return this}
+    function(parameter) {return parameter === this.str ? one : zero}
 )
 
 
@@ -44,52 +54,35 @@ const Operator = fabricForOperator(
     function() {
         return this.args.join(" ") + ` ${this.symbol}`;
     },
+    function() {
+        return `(${this.symbol} ` + this.args.map(val => val.prefix()).join(" ") + ')';
+    },
+    function() {
+        return '(' + this.args.map(val => val.postfix()).join(" ") + ` ${this.symbol})`;
+    },
     function(...args) {
         return this.func(...this.args.map(value => value.evaluate(...args)))
     },
     function(parameter) {
-        return this.operDiffer(parameter, ...this.args, ...this.args.map(val => val.diff(parameter)))
+        return this.operDiffer(parameter, ...this.args)
     },
-    function() {
-        let innerSimplified = this.args.map(value => value.simplify())
-        if (innerSimplified.every(function(op) {return op instanceof Const})) {
-            return new Const(this.func(...innerSimplified.map(value => value.evaluate())));
-        } else {
-            return this.operSimplify(...innerSimplified)
-        }
-    })
+    )
 
 
 
 const Add = fabricForOperations(
     (a, b) => a + b,
     "+",
-    (parameter, f, s, fd, sd) => new Add(fd, sd),
-    (firstOp, secondOp) => {
-        if (firstOp.toString() === "0") {
-            return secondOp;
-        } else if (secondOp.toString() === "0") {
-            return firstOp;
-        } else {
-            return new Add(firstOp, secondOp)
-        }
-    })
+    (parameter, f, s) => new Add(f.diff(parameter), s.diff(parameter)),
+    )
 
 
 
 const Subtract = fabricForOperations(
     (a, b) => a - b,
     "-",
-    (parameter, f, s, fd, sd) => new Subtract(fd, sd),
-    (firstOp, secondOp) => {
-        if (firstOp.toString() === "0") {
-            return new Negate(secondOp);
-        } else if (secondOp.toString() === "0") {
-            return firstOp;
-        } else {
-            return new Subtract(firstOp, secondOp)
-        }
-    })
+    (parameter, f, s) => new Subtract(f.diff(parameter), s.diff(parameter)),
+    )
 
 
 
@@ -97,20 +90,10 @@ const Subtract = fabricForOperations(
 const Multiply = fabricForOperations(
     (a, b) => a * b,
     "*",
-    (parameter, f, s, fd, sd) => new Add(
-        new Multiply(fd, s),
-        new Multiply(f, sd)),
-    (firstOp, secondOp) => {
-        if (firstOp.toString() === "0" || secondOp.toString() === "0") {
-            return zero;
-        } else if (firstOp.toString() === "1") {
-            return secondOp;
-        } else if (secondOp.toString() === "1") {
-            return firstOp;
-        } else {
-            return new Multiply(firstOp, secondOp)
-        }
-    })
+    (parameter, f, s) => new Add(
+        new Multiply(f.diff(parameter), s),
+        new Multiply(f, s.diff(parameter))),
+    )
 
 
 
@@ -118,27 +101,12 @@ const Multiply = fabricForOperations(
 const Divide = fabricForOperations(
     (a, b) => a / b,
     "/",
-    (parameter, f, s, fd, sd) => new Divide(
+    (parameter, f, s) => new Divide(
         new Subtract(
-            new Multiply(fd, s),
-            new Multiply(f, sd)),
-        new Multiply(s, s)
-    ),
-    (firstOp, secondOp) => {
-        if (secondOp instanceof Multiply) {
-            if (secondOp.args[0].toString() === firstOp.toString()) {
-                return new Divide(one, secondOp.args[1])
-            }
-            if (secondOp.args[1].toString() === firstOp.toString()) {
-                return new Divide(one, secondOp.args[0])
-            }
-        }
-        if (firstOp.toString() === "0") {
-            return zero;
-        } else {
-            return new Divide(firstOp, secondOp)
-        }
-    })
+            new Multiply(f.diff(parameter), s),
+            new Multiply(f, s.diff(parameter))),
+        new Multiply(s, s)),
+    )
 
 
 
@@ -146,55 +114,77 @@ const Divide = fabricForOperations(
 const Negate = fabricForOperations(
     (a) => -a,
     "negate",
-    (parameter, f, fd) => new Negate(fd),
-    (oper) => {
-        if (oper.toString() === "0") {
-            return zero
-        } else {
-            return new Negate(oper)
+    (parameter, f) => new Negate(f.diff(parameter)),
+    )
+
+function FoldLeft(func, start) {
+    return (...args) => {
+        let result = start;
+        for (const arg of args) {
+            result = func(result, arg);
         }
-    })
+        return result;
+    }
+}
 
+const longadd = FoldLeft((a, b) => a + b, 0);
+const longmul = FoldLeft((a, b) => a * b, 1);
 
+const LongAdd = fabricForOperations(
+    longadd,
+    "long-add",
+    (parameter, ...args) => (args.reduce((first, second) => new Add(first, second)).diff(parameter))
+)
 
+const LongMul = fabricForOperations(
+    longmul,
+    "long-mul",
+    (parameter, ...args) => args.reduce((first, second) => new Multiply(first, second), one).diff(parameter)
+)
 
-const HMean = fabricForOperations(
-    (a, b) => 2 / (1 / a + 1 / b),
-    "hmean",
-    (parameter, f, s) => new Divide(
-        new Multiply(
-            new Const(2),
-            new Multiply(f, s)),
-        new Add(f, s)).diff(parameter),
-    (firstOp, secondOp) => {
-        if (firstOp.toString() === "0") {
-            return zero;
-        } else if (secondOp.toString() === "0") {
-            return zero;
-        } else {
-            return new HMean (firstOp, secondOp)
-        }
-    })
+const Log = fabricForOperations(
+    (a) => Math.log(a),
+    "log",
+    (parameter, a) => new Divide(a.diff(parameter), a)
+)
 
+const Pow = fabricForOperations(
+    (a, b) => Math.pow(a, b),
+    "pow",
+    (parameter, a, b) => (
+        new Multiply(new Pow(a, new Subtract(b, one)),
+            new Add(
+                new Multiply(b, a.diff(parameter)),
+                new LongMul(a, new Log(a), b.diff(parameter))
+            ))
+    )
+)
 
+const Abs = fabricForOperations(
+    (a) => Math.abs(a),
+    "abs",
+    (parameter, a) => new Divide(new Multiply(a, a.diff(parameter)), new Abs(a))
+)
 
+const ArithMean = fabricForOperations(
+    (...args) => longadd(...args) / args.length,
+    "arith-mean",
+    (parameter, ...args) => new Divide(new LongAdd(...args).diff(parameter), new Const(args.length)),
+)
 
-const Hypot = fabricForOperations(
-    (a, b) => a * a + b * b,
-    "hypot",
-    (parameter, firstOp, secondOp) => new Add(
-        new Multiply(firstOp, firstOp),
-        new Multiply(secondOp, secondOp)).diff(parameter),
-    (firstOp, secondOp) => {
-        if (firstOp.toString() === "0") {
-            return secondOp;
-        } else if (secondOp.toString() === "0") {
-            return firstOp;
-        } else {
-            return new Hypot(firstOp, secondOp)
-        }
-    })
+const GeomMean = fabricForOperations(
+    (...args) => Math.pow(Math.abs(longmul(...args)), 1 / args.length),
+    "geom-mean",
+    (parameter, ...args) => new Pow(new Abs(new LongMul(...args)), new Const(1 / args.length)).diff(parameter),
+)
 
+const HarmMean = fabricForOperations(
+    (...args) => args.length / longadd(...args.map(val => 1 / val)),
+    "harm-mean",
+    (parameter, ...args) => new Divide(
+        new Const(args.length),
+        new LongAdd(...args.map(val => new Divide(one, val)))).diff(parameter)
+)
 
 let zero = new Const(0)
 let one = new Const(1)
@@ -219,8 +209,13 @@ const operatorTokens = new Map([
     ["/", Divide],
     ["*", Multiply],
     ["negate", Negate],
-    ["hypot", Hypot],
-    ["hmean", HMean]
+    ["long-add", LongAdd],
+    ["long-mul", LongMul],
+    ["arith-mean", ArithMean],
+    ["geom-mean", GeomMean],
+    ["harm-mean", HarmMean],
+    ["pow", Pow],
+    ["abs", Abs]
 ]);
 
 
@@ -247,3 +242,115 @@ function parse(str) {
     }
     return exp[0]
 }
+
+
+function parsePrefix(str) {
+    return parseAll(str, 'prefix')
+}
+
+function parsePostfix(str) {
+    return parseAll(str, 'postfix')
+}
+
+function parseAll(str, mode) {
+    str = str.replace(/[(]/g, ' ( ').replace(/[)]/g, ' ) ')
+    let expr = str.split(/[ ]/).filter(c => c !== "");
+    if (expr.length === 0) {
+        throw new EmptyString('');
+    }
+    if (expr[0] !== '(') {
+        return parseArgs(expr,0, 0, 'prefix')[0][0]
+    }
+    let res = parse(expr, 1, 0, mode)
+    if (res[2] !== 0) {
+        throw new BracketsError(')');
+    }
+    if (res[1] < expr.length - 1) {
+        throw new EndOfExpressionError(expr[res[1]]);
+    }
+    return res[0];
+}
+
+
+function parse(expr, balance, index, mode) {
+    let op;
+    let args;
+    if (mode === 'prefix') {
+        op = parseOper(expr, ++index)
+        args = parseArgs(expr, balance, ++index, mode)
+        index = args[1]
+    } else {
+        args = parseArgs(expr, balance, ++index, mode)
+        index = args[1]
+        op = parseOper(expr, index - 1)
+    }
+    if (op.prototype.func.length !== args[0].length && op.prototype.func.length !== 0) {
+        throw new LengthOfArgumentsError(args[0])
+    }
+    return [new op(...args[0]), index, args[2]];
+}
+
+function parseOper(expr, index) {
+    let ex = expr[index]
+    if (operatorTokens.has(ex)) {
+        return operatorTokens.get(ex);
+    } else {
+        throw new OperatorError(ex)
+    }
+}
+
+function parseArgs(expr, balance, index, mode) {
+    let startBalance = balance - 2;
+    let args = [];
+    while (startBalance < balance && index < expr.length) {
+        let ex = expr[index]
+        if (operatorTokens.has(ex)){
+            if (mode === 'prefix' || mode === 'postfix' && expr[index + 1] !== ')') {
+                throw new OperatorError(ex);
+            }
+        } else if (ex === (')')) {
+            balance--;
+            if (balance < 0) {
+                throw new BracketsError(ex);
+            }
+            break;
+        } else if (ex === '(') {
+            let expression = parse(expr, balance + 1, index, mode)
+            index = expression[1]
+            args.push(expression[0])
+        } else if (variableTokens.has(ex)) {
+            args.push(new Variable(ex))
+        } else if (constTokens.has(ex)) {
+            args.push(new constTokens.get(ex));
+        } else if (!isNaN(ex)) {
+            args.push(new Const(Number(ex)))
+        } else {
+            throw new TokenError(ex)
+        }
+        index++;
+        if (balance === 0 && index !== expr.length) {
+            throw new EndOfExpressionError(ex)
+        }
+    }
+    return [args, index, balance];
+}
+
+
+const EndOfExpressionError = fabricForError('Unexpected Symbols')
+
+const TokenError = fabricForError("Unexpected token")
+
+const BracketsError = fabricForError("Wrong number of brackets")
+
+const OperatorError = fabricForError("No operator after bracket")
+
+const LengthOfArgumentsError = fabricForError("Too much arguments")
+
+const EmptyString = fabricForError("Empty expression")
+
+
+// let print = console.log
+// let expr1 = parsePostfix('(x 2 +');
+// //let expr2 = parsePrefix('x')
+// print(expr1.prefix())
+// //print(expr2.postfix())
