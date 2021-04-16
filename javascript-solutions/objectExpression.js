@@ -9,12 +9,12 @@ let abstractOperator = function (...args) {
     this.postfix = this.toString;
     this.evaluate = () => args[0];
     this.diff = () => zero;
-}
+};
 
 function fabricForOperations(func, symbol, operDiffer) {
     let constructorOp = function(...args) {
         Operator.apply(this, args)
-    }
+    };
     constructorOp.prototype = Object.create(Operator);
     constructorOp.prototype.func = func;
     constructorOp.prototype.symbol = symbol;
@@ -25,36 +25,37 @@ function fabricForOperations(func, symbol, operDiffer) {
 function fabricForError(message) {
     let ExprError = function(expr) {
         this.message = message + " : " + expr;
-    }
+    };
     ExprError.prototype = Object.create(Error.prototype);
     return ExprError
 }
 
 const Const = function(value) {
     abstractOperator.apply(this, [value]);
-}
+};
 
 const Variable = function(str) {
     abstractOperator.apply(this, [str, variableTokens.get(str)]);
-    this.evaluate = function(...arg) {return arg[this.args[1]]}
+    this.evaluate = function(...arg) {return arg[this.args[1]]};
     this.diff = function(parameter) {return (parameter === str ? one : zero)}
-}
+};
 
 const Operator = function(...args) {
     abstractOperator.apply(this, args);
-    this.toString = function() {return this.args.join(" ") + ` ${this.symbol}`;}
-    this.prefix = function() {return `(${this.symbol} ` + this.args.map(val => val.prefix()).join(" ") + ')'}
-    this.postfix = function() {return '(' + this.args.map(val => val.postfix()).join(" ") + ` ${this.symbol})`}
-    this.evaluate = function(...arg) {return this.func(...this.args.map(value => value.evaluate(...arg)))}
+    this.toString = function() {return this.args.join(" ") + ` ${this.symbol}`;};
+    this.prefix = function() {return `(${this.symbol} ` + this.args.map(val => val.prefix()).join(" ") + ')'};
+    this.postfix = function() {return '(' + this.args.map(val => val.postfix()).join(" ") + ` ${this.symbol})`};
+    this.evaluate = function(...arg) {return this.func(...this.args.map(value => value.evaluate(...arg)))};
     this.diff = function (parameter) {return this.operDiffer(parameter, ...this.args)}
-}
+};
 
 
 const Add = fabricForOperations(
     (a, b) => a + b,
     "+",
+    // :NOTE: .diff(parameter)
     (parameter, f, s) => new Add(f.diff(parameter), s.diff(parameter)),
-)
+);
 
 
 
@@ -62,7 +63,7 @@ const Subtract = fabricForOperations(
     (a, b) => a - b,
     "-",
     (parameter, f, s) => new Subtract(f.diff(parameter), s.diff(parameter)),
-)
+);
 
 
 
@@ -73,7 +74,7 @@ const Multiply = fabricForOperations(
     (parameter, f, s) => new Add(
         new Multiply(f.diff(parameter), s),
         new Multiply(f, s.diff(parameter))),
-)
+);
 
 
 
@@ -86,7 +87,7 @@ const Divide = fabricForOperations(
             new Multiply(f.diff(parameter), s),
             new Multiply(f, s.diff(parameter))),
         new Multiply(s, s)),
-)
+);
 
 
 
@@ -95,7 +96,7 @@ const Negate = fabricForOperations(
     (a) => -a,
     "negate",
     (parameter, f) => new Negate(f.diff(parameter)),
-)
+);
 
 function FoldLeft(func, start) {
     return (...args) => {
@@ -107,6 +108,7 @@ function FoldLeft(func, start) {
     }
 }
 
+// :NOTE: reduce
 const longadd = FoldLeft((a, b) => a + b, 0);
 const longmul = FoldLeft((a, b) => a * b, 1);
 
@@ -114,19 +116,20 @@ const LongAdd = fabricForOperations(
     longadd,
     "long-add",
     (parameter, ...args) => (args.reduce((first, second) => new Add(first, second)).diff(parameter))
-)
+);
 
 const LongMul = fabricForOperations(
     longmul,
     "long-mul",
     (parameter, ...args) => args.reduce((first, second) => new Multiply(first, second), one).diff(parameter)
-)
+);
 
 const Log = fabricForOperations(
+    // :NOTE: ??
     (a) => Math.log(a),
     "log",
     (parameter, a) => new Divide(a.diff(parameter), a)
-)
+);
 
 const Pow = fabricForOperations(
     (a, b) => Math.pow(a, b),
@@ -138,25 +141,25 @@ const Pow = fabricForOperations(
                 new LongMul(a, new Log(a), b.diff(parameter))
             ))
     )
-)
+);
 
 const Abs = fabricForOperations(
     (a) => Math.abs(a),
     "abs",
     (parameter, a) => new Divide(new Multiply(a, a.diff(parameter)), new Abs(a))
-)
+);
 
 const ArithMean = fabricForOperations(
     (...args) => longadd(...args) / args.length,
     "arith-mean",
     (parameter, ...args) => new Divide(new LongAdd(...args).diff(parameter), new Const(args.length)),
-)
+);
 
 const GeomMean = fabricForOperations(
     (...args) => Math.pow(Math.abs(longmul(...args)), 1 / args.length),
     "geom-mean",
     (parameter, ...args) => new Pow(new Abs(new LongMul(...args)), new Const(1 / args.length)).diff(parameter),
-)
+);
 
 const HarmMean = fabricForOperations(
     (...args) => args.length / longadd(...args.map(val => 1 / val)),
@@ -164,23 +167,24 @@ const HarmMean = fabricForOperations(
     (parameter, ...args) => new Divide(
         new Const(args.length),
         new LongAdd(...args.map(val => new Divide(one, val)))).diff(parameter)
-)
+);
 
-let zero = new Const(0)
-let one = new Const(1)
+// :NOTE: Const.ZERO
+const zero = new Const(0);
+const one = new Const(1);
 
 
 const variableTokens = new Map([
     ["x", 0],
     ["y", 1],
     ["z", 2]
-])
+]);
 
 
 const constTokens = new Map([
     [0, zero],
     [1, one]
-])
+]);
 
 
 const operatorTokens = new Map([
@@ -206,7 +210,7 @@ function parse(str) {
 
     function apply(i) {
         if (operatorTokens.has(i)) {
-            let operator = operatorTokens.get(i)
+            let operator = operatorTokens.get(i);
             return new operator(... exp.splice(-operator.prototype.func.length))
         } else if (variableTokens.has(i)) {
             return new Variable(i)
@@ -233,15 +237,16 @@ function parsePostfix(str) {
 }
 
 function parseAll(str, mode) {
-    str = str.replace(/[(]/g, ' ( ').replace(/[)]/g, ' ) ')
+    str = str.replace(/[(]/g, ' ( ').replace(/[)]/g, ' ) ');
     let expr = str.split(/[ ]/).filter(c => c !== "");
     if (expr.length === 0) {
-        throw new EmptyString('');
+        // :NOTE: Error
+        throw new EmptyStringError('');
     }
     if (expr[0] !== '(') {
         return parseArgs(expr,0, 0, 'prefix')[0][0]
     }
-    let res = parse(expr, 1, 0, mode)
+    let res = parse(expr, 1, 0, mode);
     if (res[2] !== 0) {
         throw new BracketsError(')');
     }
@@ -251,17 +256,17 @@ function parseAll(str, mode) {
     return res[0];
 }
 
-
+// :NOTE: Дублирование??
 function parse(expr, balance, index, mode) {
     let op;
     let args;
     if (mode === 'prefix') {
-        op = parseOper(expr, ++index)
-        args = parseArgs(expr, balance, ++index, mode)
+        op = parseOper(expr, ++index);
+        args = parseArgs(expr, balance, ++index, mode);
         index = args[1]
     } else {
-        args = parseArgs(expr, balance, ++index, mode)
-        index = args[1]
+        args = parseArgs(expr, balance, ++index, mode);
+        index = args[1];
         op = parseOper(expr, index - 1)
     }
     if (op.prototype.func.length !== args[0].length && op.prototype.func.length !== 0) {
@@ -271,7 +276,7 @@ function parse(expr, balance, index, mode) {
 }
 
 function parseOper(expr, index) {
-    let ex = expr[index]
+    let ex = expr[index];
     if (operatorTokens.has(ex)) {
         return operatorTokens.get(ex)
     } else {
@@ -282,7 +287,8 @@ function parseOper(expr, index) {
 function parseArgs(expr, balance, index, mode) {
     let args = [];
     while (index < expr.length) {
-        let ex = expr[index]
+        let ex = expr[index];
+        // :NOTE: Упростить
         if (operatorTokens.has(ex)){
             if (mode === 'prefix' || expr[index + 1] !== ')') {
                 throw new OperatorError(ex);
@@ -294,8 +300,8 @@ function parseArgs(expr, balance, index, mode) {
             }
             break;
         } else if (ex === '(') {
-            let expression = parse(expr, balance + 1, index, mode)
-            index = expression[1]
+            let expression = parse(expr, balance + 1, index, mode);
+            index = expression[1];
             args.push(expression[0])
         } else if (variableTokens.has(ex)) {
             args.push(new Variable(ex))
@@ -315,15 +321,15 @@ function parseArgs(expr, balance, index, mode) {
 }
 
 
-const EndOfExpressionError = fabricForError('Unexpected Symbols')
+const EndOfExpressionError = fabricForError('Unexpected Symbols');
 
-const TokenError = fabricForError("Unexpected token")
+const TokenError = fabricForError("Unexpected token");
 
-const BracketsError = fabricForError("Wrong number of brackets")
+const BracketsError = fabricForError("Wrong number of brackets");
 
-const OperatorError = fabricForError("No operator after bracket")
+const OperatorError = fabricForError("No operator after bracket");
 
-const LengthOfArgumentsError = fabricForError("Too much arguments")
+const LengthOfArgumentsError = fabricForError("Too much arguments");
 
-const EmptyString = fabricForError("Empty expression")
+const EmptyStringError = fabricForError("Empty expression");
 
