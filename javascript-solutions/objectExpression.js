@@ -66,7 +66,7 @@ const Operator = fabricForOperator(
     function(parameter) {
         return this.operDiffer(parameter, ...this.args)
     },
-    )
+)
 
 
 
@@ -74,7 +74,7 @@ const Add = fabricForOperations(
     (a, b) => a + b,
     "+",
     (parameter, f, s) => new Add(f.diff(parameter), s.diff(parameter)),
-    )
+)
 
 
 
@@ -82,7 +82,7 @@ const Subtract = fabricForOperations(
     (a, b) => a - b,
     "-",
     (parameter, f, s) => new Subtract(f.diff(parameter), s.diff(parameter)),
-    )
+)
 
 
 
@@ -93,7 +93,7 @@ const Multiply = fabricForOperations(
     (parameter, f, s) => new Add(
         new Multiply(f.diff(parameter), s),
         new Multiply(f, s.diff(parameter))),
-    )
+)
 
 
 
@@ -106,7 +106,7 @@ const Divide = fabricForOperations(
             new Multiply(f.diff(parameter), s),
             new Multiply(f, s.diff(parameter))),
         new Multiply(s, s)),
-    )
+)
 
 
 
@@ -115,7 +115,7 @@ const Negate = fabricForOperations(
     (a) => -a,
     "negate",
     (parameter, f) => new Negate(f.diff(parameter)),
-    )
+)
 
 function FoldLeft(func, start) {
     return (...args) => {
@@ -287,31 +287,30 @@ function parse(expr, balance, index, mode) {
     if (op.prototype.func.length !== args[0].length && op.prototype.func.length !== 0) {
         throw new LengthOfArgumentsError(args[0])
     }
-    return [new op(...args[0]), index, args[2]];
+    return [new op(...args[0]), index, args[2]]
 }
 
 function parseOper(expr, index) {
     let ex = expr[index]
     if (operatorTokens.has(ex)) {
-        return operatorTokens.get(ex);
+        return operatorTokens.get(ex)
     } else {
         throw new OperatorError(ex)
     }
 }
 
 function parseArgs(expr, balance, index, mode) {
-    let startBalance = balance - 2;
     let args = [];
-    while (startBalance < balance && index < expr.length) {
+    while (index < expr.length) {
         let ex = expr[index]
         if (operatorTokens.has(ex)){
-            if (mode === 'prefix' || mode === 'postfix' && expr[index + 1] !== ')') {
+            if (mode === 'prefix' || expr[index + 1] !== ')') {
                 throw new OperatorError(ex);
             }
         } else if (ex === (')')) {
             balance--;
             if (balance < 0) {
-                throw new BracketsError(ex);
+                throw new BracketsError(ex)
             }
             break;
         } else if (ex === '(') {
@@ -332,7 +331,7 @@ function parseArgs(expr, balance, index, mode) {
             throw new EndOfExpressionError(ex)
         }
     }
-    return [args, index, balance];
+    return [args, index, balance]
 }
 
 
@@ -353,4 +352,4 @@ const EmptyString = fabricForError("Empty expression")
 // let expr1 = parsePostfix('(x 2 +');
 // //let expr2 = parsePrefix('x')
 // print(expr1.prefix())
-// //print(expr2.postfix())
+// //print(expr2.postfix()))
