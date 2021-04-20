@@ -5,7 +5,7 @@ import expression.GenOperations.AllGenericOperations;
 
 import java.util.List;
 
-public class ExpressionParser<T, C extends AllGenericOperations<T>> extends BaseParser implements Parser<T> {
+public class ExpressionParser<T, C extends AllGenericOperations<T>> extends BaseParser implements Parser {
     private final C calc;
 
     private static final List<List<String>> PRIORITIESBIN = List.of(
@@ -31,20 +31,20 @@ public class ExpressionParser<T, C extends AllGenericOperations<T>> extends Base
         return parse(maxlev);
     }
 
-    private TripleExpression<T> parse(int curentlev) {
+    private TripleExpression parse(int curentlev) {
         if (curentlev == minlev) {
             return getOperatorOrUnaryExpression();
         }
         skipWhitespace();
-        boolean exsistNext = true;
+        boolean existNext = true;
         TripleExpression<T> current = parse(curentlev - 1);
-        while (exsistNext) {
-            exsistNext = false;
+        while (existNext) {
+            existNext = false;
             skipWhitespace();
             for (String operation : PRIORITIESBIN.get(curentlev)) {
                 if (test(operation)) {
                     current = getBinaryExpression(operation, current, parse(curentlev - 1));
-                    exsistNext = true;
+                    existNext = true;
                 }
             }
         }
@@ -53,7 +53,7 @@ public class ExpressionParser<T, C extends AllGenericOperations<T>> extends Base
 
 
 
-    private TripleExpression<T> getOperatorOrUnaryExpression() {
+    private TripleExpression getOperatorOrUnaryExpression() {
         skipWhitespace();
         if (test('-')) {
             skipWhitespace();
@@ -63,7 +63,7 @@ public class ExpressionParser<T, C extends AllGenericOperations<T>> extends Base
                 return new NegativeOperator<>(getOperatorOrUnaryExpression(), calc);
             }
         } else if (test('(')) {
-            TripleExpression<T> exp = parse(maxlev);
+            TripleExpression exp = parse(maxlev);
             expect(')');
             return exp;
         } else if (isDigit()) {
@@ -102,7 +102,7 @@ public class ExpressionParser<T, C extends AllGenericOperations<T>> extends Base
         return builder.toString();
     }
 
-    private BinaryOperation<T> getBinaryExpression(String lastop, TripleExpression<T> left, TripleExpression<T> right) {
+    private BinaryOperation<T> getBinaryExpression(String lastop, TripleExpression left, TripleExpression right) {
         switch (lastop) {
             case "+" :
                 return new Add<>(left, right, calc);
@@ -119,7 +119,7 @@ public class ExpressionParser<T, C extends AllGenericOperations<T>> extends Base
         }
     }
 
-    private UnaryOperation<T> getUnaryExpression(String lastop, TripleExpression<T> exp) {
+    private UnaryOperation<T> getUnaryExpression(String lastop, TripleExpression exp) {
         switch (lastop) {
             case "abs" :
                 return new Abs<>(exp, calc);

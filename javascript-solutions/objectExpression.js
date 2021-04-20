@@ -281,11 +281,9 @@ function parseAll(str, mode) {
 
 
 function parseExpr(expr, balance, index, mode) {
-    //print(index)
     let tokens = parseTokens(expr, balance, index, mode)
     let op;
     let args;
-    //print(tokens[0])
     if (mode === 'prefix') {
         op = tokens[0][0];
         args = tokens[0].slice(1)
@@ -294,6 +292,9 @@ function parseExpr(expr, balance, index, mode) {
         op = tokens[0][tokens[0].length - 1]
     }
     index = tokens[2];
+    if (typeof op !== "function") {
+        throw new OperatorError(op, index)
+    }
     if (op.prototype.func.length !== args.length && op.prototype.func.length !== 0) {
         throw new LengthOfArgumentsError(args, index)
     }
@@ -306,7 +307,7 @@ function parseTokens(expr, balance, index, mode) {
         let ex = expr[index];
         if (ex === '(') {
             let expression = parseExpr(expr, balance + 1, index + 1, mode);
-            index = expression[1];
+            index = expression[2];
             args.push(expression[0])
         } else if (ex === (')')) {
             balance--;
@@ -321,7 +322,11 @@ function parseTokens(expr, balance, index, mode) {
         } else if (!isNaN(ex)) {
             args.push(new Const(Number(ex)))
         } else if (operatorTokens.has(ex)) {
-            args.push(operatorTokens.get(ex));
+            if (mode === 'prefix' && expr[index - 1] === '(' || mode === 'postfix' && expr[index + 1] === ')') {
+                args.push(operatorTokens.get(ex));
+            } else {
+                throw new OperatorError(ex, index);
+            }
         } else {
             throw new TokenError(ex, index)
         }
@@ -346,6 +351,6 @@ const LengthOfArgumentsError = fabricForError("Wrong number of arguments");
 
 const EmptyStringError = fabricForError("Empty expression");
 
-let print = console.log
-let expr = parsePostfix('(x (3 2 +) *)')
-console.log(expr.evaluate(2));
+// let print = console.log
+// let expr = parsePostfix('(1 7 *)')
+// console.log(expr.evaluate(2));
