@@ -53,6 +53,28 @@ public class LinkedQueue extends AbstractQueue {
         tail = null;
     }
 
+
+    public Object[] toArray(){
+        Object[] array = new Object[size];
+        Node temp = head;
+        for (int i = 0; i < size; i++) {
+            array[i] = temp.value;
+            temp = temp.prev;
+        }
+        return array;
+    }
+
+    protected void toStrImpl(StringBuilder str){
+        Node temp = head;
+        for (int i = 0; i < size; i++) {
+            if (i != 0) {
+                str.append(", ");
+            }
+            str.append(temp.value.toString());
+            temp = temp.prev;
+        }
+    }
+
     protected Queue createNew() {
         return new LinkedQueue();
     }

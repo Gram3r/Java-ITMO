@@ -38,6 +38,18 @@ public class ArrayQueue extends AbstractQueue {
         return elements[(head + size - 1 + elements.length) % elements.length];
     }
 
+    public Object[] toArray(){
+        return copy(size);
+    }
+
+    protected void toStrImpl(StringBuilder str){
+        for (int i = 0; i < size; i++) {
+            if (i != 0) {
+                str.append(", ");
+            }
+            str.append(elements[(head + i) % elements.length].toString());
+        };
+    }
 
     protected void clearImpl() {
         head = 0;

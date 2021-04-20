@@ -89,13 +89,51 @@ const Divide = fabricForOperations(
 );
 
 
-
-
 const Negate = fabricForOperations(
     (a) => -a,
     "negate",
     (parameter, f, fx) => new Negate(fx),
 );
+
+
+const HMean = fabricForOperations(
+    (a, b) => 2 / (1 / a + 1 / b),
+    "hmean",
+    (parameter, f, s) => new Divide(
+        new Multiply(
+            new Const(2),
+            new Multiply(f, s)),
+        new Add(f, s)).diff(parameter),
+    (firstOp, secondOp) => {
+        if (firstOp.toString() === "0") {
+            return zero;
+        } else if (secondOp.toString() === "0") {
+            return zero;
+        } else {
+            return new HMean (firstOp, secondOp)
+        }
+    })
+
+
+
+
+const Hypot = fabricForOperations(
+    (a, b) => a * a + b * b,
+    "hypot",
+    (parameter, firstOp, secondOp) => new Add(
+        new Multiply(firstOp, firstOp),
+        new Multiply(secondOp, secondOp)).diff(parameter),
+    (firstOp, secondOp) => {
+        if (firstOp.toString() === "0") {
+            return secondOp;
+        } else if (secondOp.toString() === "0") {
+            return firstOp;
+        } else {
+            return new Hypot(firstOp, secondOp)
+        }
+    })
+
+
 
 
 const longadd = (...args) => (args.reduce((a, b) => a + b, 0))
@@ -181,6 +219,8 @@ const operatorTokens = new Map([
     ["/", Divide],
     ["*", Multiply],
     ["negate", Negate],
+    ["hypot", Hypot],
+    ["hmean", HMean],
     ["arith-mean", ArithMean],
     ["geom-mean", GeomMean],
     ["harm-mean", HarmMean]
@@ -227,64 +267,53 @@ function parseAll(str, mode) {
         throw new EmptyStringError('', 0);
     }
     if (expr[0] !== '(') {
-        return parseArgs(expr,0, 0, 'prefix')[0][0]
+        return parseTokens(expr,0, 0, 'prefix')[0][0]
     }
-    let res = parseExpression(expr, 1, 0, mode);
-    if (res[2] !== 0) {
+    let res = parseExpr(expr, 1, 1, mode);
+    if (res[1] !== 0) {
         throw new BracketsError(')', expr.length - 1);
     }
-    if (res[1] < expr.length - 1) {
+    if (res[2] < expr.length - 1) {
         throw new EndOfExpressionError(expr[res[1] + 1], res[1] + 1);
     }
     return res[0];
 }
 
-function parseExpression(expr, balance, index, mode) {
+
+function parseExpr(expr, balance, index, mode) {
+    //print(index)
+    let tokens = parseTokens(expr, balance, index, mode)
     let op;
     let args;
+    //print(tokens[0])
     if (mode === 'prefix') {
-        op = parseOper(expr, ++index);
-        args = parseArgs(expr, balance, ++index, mode);
-        index = args[1]
+        op = tokens[0][0];
+        args = tokens[0].slice(1)
     } else {
-        args = parseArgs(expr, balance, ++index, mode);
-        index = args[1];
-        op = parseOper(expr, index - 1)
+        args = tokens[0].slice(0 , tokens[0].length - 1)
+        op = tokens[0][tokens[0].length - 1]
     }
-    if (op.prototype.func.length !== args[0].length && op.prototype.func.length !== 0) {
-        throw new LengthOfArgumentsError(args[0], index)
+    index = tokens[2];
+    if (op.prototype.func.length !== args.length && op.prototype.func.length !== 0) {
+        throw new LengthOfArgumentsError(args, index)
     }
-    return [new op(...args[0]), index, args[2]]
+    return [new op(...args), tokens[1], index]
 }
 
-function parseOper(expr, index) {
-    let ex = expr[index];
-    if (operatorTokens.has(ex)) {
-        return operatorTokens.get(ex, index)
-    } else {
-        throw new OperatorError(ex, index)
-    }
-}
-
-function parseArgs(expr, balance, index, mode) {
+function parseTokens(expr, balance, index, mode) {
     let args = [];
     while (index < expr.length) {
         let ex = expr[index];
-        // :NOTE: Упростить
-        if (operatorTokens.has(ex)){
-            if (mode === 'prefix' || expr[index + 1] !== ')') {
-                throw new OperatorError(ex, index);
-            }
+        if (ex === '(') {
+            let expression = parseExpr(expr, balance + 1, index + 1, mode);
+            index = expression[1];
+            args.push(expression[0])
         } else if (ex === (')')) {
             balance--;
             if (balance < 0) {
                 throw new BracketsError(ex, index)
             }
             break;
-        } else if (ex === '(') {
-            let expression = parseExpression(expr, balance + 1, index, mode);
-            index = expression[1];
-            args.push(expression[0])
         } else if (variableTokens.has(ex)) {
             args.push(new Variable(ex))
         } else if (constTokens.has(ex)) {
@@ -301,7 +330,7 @@ function parseArgs(expr, balance, index, mode) {
             throw new EndOfExpressionError(ex, index)
         }
     }
-    return [args, index, balance]
+    return [args, balance, index]
 }
 
 
@@ -317,5 +346,6 @@ const LengthOfArgumentsError = fabricForError("Wrong number of arguments");
 
 const EmptyStringError = fabricForError("Empty expression");
 
-
-
+let print = console.log
+let expr = parsePostfix('(x (3 2 +) *)')
+console.log(expr.evaluate(2));

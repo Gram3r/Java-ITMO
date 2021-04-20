@@ -50,7 +50,7 @@ public interface Queue {
             Pred: n > 0
             Post: n == n' - 1 && forall i == 1..n : a[i] == a'[i] && R == a'[n']
     */
-    Object pop();
+    Object remove();
 
 
     /*

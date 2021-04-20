@@ -61,7 +61,7 @@ public abstract class AbstractQueue implements Queue {
         return res;
     }
 
-    public Object pop(){
+    public Object remove(){
         assert size > 0;
         Object res = popImpl();
         size--;
@@ -73,6 +73,14 @@ public abstract class AbstractQueue implements Queue {
         clearImpl();
     }
 
+    public String toStr(){
+        StringBuilder str = new StringBuilder();
+        str.append('[');
+        toStrImpl(str);
+        str.append(']');
+        return str.toString();
+        //return Arrays.toString(toArray());
+    }
 
     protected abstract void enqueueImpl(final Object el);
 
@@ -83,6 +91,8 @@ public abstract class AbstractQueue implements Queue {
     protected abstract Object popImpl();
 
     protected abstract void clearImpl();
+
+    protected abstract void toStrImpl(StringBuilder str);
 
     protected abstract Queue createNew();
 }
