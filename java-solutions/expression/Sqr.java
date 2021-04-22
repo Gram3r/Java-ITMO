@@ -3,7 +3,7 @@ package expression;
 import expression.GenOperations.AllGenericOperations;
 
 public class Sqr<T> extends UnaryOperation<T> {
-    public Sqr(TripleExpression<T> inner, AllGenericOperations<T> calc) {
+    public Sqr(GenericTripleExpression<T> inner, AllGenericOperations<T> calc) {
         super(inner, calc);
     }
 

@@ -3,9 +3,9 @@ package expression;
 import expression.GenOperations.AllGenericOperations;
 
 public abstract class UnaryOperation<T> extends AbstractAllOperation<T> {
-    protected final TripleExpression<T> expression;
+    protected final GenericTripleExpression<T> expression;
 
-    public UnaryOperation(TripleExpression<T> expression, AllGenericOperations<T> calc) {
+    public UnaryOperation(GenericTripleExpression<T> expression, AllGenericOperations<T> calc) {
         super(calc);
         this.expression = expression;
     }

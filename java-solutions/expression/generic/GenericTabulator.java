@@ -1,9 +1,9 @@
 package expression.generic;
 
 import expression.GenOperations.*;
-import expression.TripleExpression;
-import expression.parser.ExpressionParser;
-import expression.parser.Parser;
+import expression.GenericTripleExpression;
+import expression.parser.GenericExpressionParser;
+import expression.parser.GenericParser;
 
 import java.util.Map;
 
@@ -49,8 +49,8 @@ public class GenericTabulator implements Tabulator {
             throw new Exception("Unexpected value: " + mode);
         }
 
-        Parser<?> parser = new ExpressionParser<>(myGeneric);
-        TripleExpression<?> exp = parser.parse(expression);
+        GenericParser<?> parser = new GenericExpressionParser<>(myGeneric);
+        GenericTripleExpression<?> exp = parser.parse(expression);
         System.out.println(exp.toString());
         for (int i = x1; i <= x2; i++) {
             for (int j = y1; j <= y2; j++) {

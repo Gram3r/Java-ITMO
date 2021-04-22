@@ -4,7 +4,7 @@ package expression;
 import expression.GenOperations.AllGenericOperations;
 
 public class Abs<T> extends UnaryOperation<T> {
-    public Abs(TripleExpression<T> inner, AllGenericOperations<T> calc) {
+    public Abs(GenericTripleExpression<T> inner, AllGenericOperations<T> calc) {
         super(inner, calc);
     }
 

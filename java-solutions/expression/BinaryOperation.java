@@ -5,9 +5,9 @@ import expression.GenOperations.AllGenericOperations;
 import java.util.Objects;
 
 public abstract class BinaryOperation<T> extends AbstractAllOperation<T> {
-    private final TripleExpression<T> left, right;
+    private final GenericTripleExpression<T> left, right;
 
-    public BinaryOperation(TripleExpression<T> left, TripleExpression<T> right, AllGenericOperations<T> calc){
+    public BinaryOperation(GenericTripleExpression<T> left, GenericTripleExpression<T> right, AllGenericOperations<T> calc){
         super(calc);
         this.left = left;
         this.right = right;

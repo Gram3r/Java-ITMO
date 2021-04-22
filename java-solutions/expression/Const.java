@@ -1,6 +1,6 @@
 package expression;
 
-public class Const<T> implements TripleExpression<T> {
+public class Const<T> implements GenericTripleExpression<T> {
     private final T num;
 
     public Const(T num) {

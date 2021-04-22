@@ -5,7 +5,7 @@ import expression.GenOperations.AllGenericOperations;
 
 public class NegativeOperator<T> extends UnaryOperation<T> {
 
-    public NegativeOperator(TripleExpression<T> inner, AllGenericOperations<T> calc) {
+    public NegativeOperator(GenericTripleExpression<T> inner, AllGenericOperations<T> calc) {
         super(inner, calc);
     }
 

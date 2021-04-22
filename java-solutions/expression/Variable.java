@@ -2,7 +2,7 @@ package expression;
 
 import expression.GenOperations.AllGenericOperations;
 
-public class Variable<T> implements TripleExpression<T> {
+public class Variable<T> implements GenericTripleExpression<T> {
     private final String name;
 
     final AllGenericOperations<T> calc;

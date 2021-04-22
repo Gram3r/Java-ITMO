@@ -3,7 +3,7 @@ package expression;
 import expression.GenOperations.AllGenericOperations;
 
 public class Add<T> extends BinaryOperation<T> {
-    public Add(TripleExpression<T> left, TripleExpression<T> right, AllGenericOperations<T> calc) {
+    public Add(GenericTripleExpression<T> left, GenericTripleExpression<T> right, AllGenericOperations<T> calc) {
         super(left, right, calc);
     }
 

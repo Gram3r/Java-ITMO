@@ -4,7 +4,7 @@ import expression.GenOperations.AllGenericOperations;
 
 public class Divide<T> extends BinaryOperation<T> {
 
-    public Divide(TripleExpression<T> left, TripleExpression<T> right, AllGenericOperations<T> calc) {
+    public Divide(GenericTripleExpression<T> left, GenericTripleExpression<T> right, AllGenericOperations<T> calc) {
         super(left, right, calc);
     }
 
