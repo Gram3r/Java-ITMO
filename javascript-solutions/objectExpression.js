@@ -22,12 +22,13 @@ function fabricForOperations(func, symbol, operDiffer) {
     return constructorOp
 }
 
-function fabricForError(message) {
-    // :NOTE: Наследование
-    let ExprError = function(expr, index) {
-        this.message = message + " : " + expr + " on " + index + " index";
-    };
-    ExprError.prototype = Object.create(Error.prototype);
+function fabricForError(name, message) {
+    class ExprError extends Error{
+        constructor(expr, index) {
+            super(message + " " + expr + " on " + index + " index");
+            this.name = name;
+        }
+    }
     return ExprError
 }
 
@@ -276,10 +277,10 @@ function parseExpr(expr, balance, index, mode) {
     }
     index = tokens[2];
     if (typeof op !== "function") {
-        throw new TokenError(op, index)
+        throw new TokenError(expr[index], index)
     }
     if (op.prototype.func.length !== args.length && op.prototype.func.length !== 0) {
-        throw new LengthOfArgumentsError(args.length, index)
+        throw new (LengthOfArgumentsError(args.length, op.prototype.func.length))("", index)
     }
     return [new op(...args), tokens[1], index]
 }
@@ -322,9 +323,9 @@ function parseTokens(expr, balance, index, mode) {
 }
 
 
-const EndOfExpressionError = fabricForError('Unexpected Symbols');
-const TokenError = fabricForError("Unexpected token");
-const BracketsError = fabricForError("Wrong number of brackets");
-const OperatorError = fabricForError("No bracket after operator");
-const LengthOfArgumentsError = fabricForError("Wrong number of arguments. Number of found arguments");
-const EmptyStringError = fabricForError("Empty expression");
+const EndOfExpressionError = fabricForError('EndOfExpressionError','Unexpected Symbols');
+const TokenError = fabricForError('TokenError',"Unexpected token");
+const BracketsError = fabricForError('BracketsError', "Wrong number of brackets");
+const OperatorError = fabricForError('OperatorError', "No bracket after operator");
+const LengthOfArgumentsError = (found, expected) => fabricForError('LengthOfArgumentsError', "Wrong number of arguments. Number of found arguments: " + found + " expected " + expected);
+const EmptyStringError = fabricForError('EmptyStringError', "Empty expression");
