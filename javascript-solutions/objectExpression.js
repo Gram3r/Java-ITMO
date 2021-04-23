@@ -8,7 +8,7 @@ let abstractOperator = function (...args) {
     this.prefix = this.toString;
     this.postfix = this.toString;
     this.evaluate = () => args[0];
-    this.diff = () => zero;
+    this.diff = () => Const.zero;
 };
 
 function fabricForOperations(func, symbol, operDiffer) {
@@ -37,7 +37,7 @@ const Const = function(value) {
 const Variable = function(str) {
     abstractOperator.apply(this, [str, variableTokens.get(str)]);
     this.evaluate = function(...arg) {return arg[this.args[1]]};
-    this.diff = function(parameter) {return (parameter === str ? one : zero)}
+    this.diff = function(parameter) {return (parameter === str ? Const.one : Const.zero)}
 };
 
 const Operator = function(...args) {
@@ -106,9 +106,9 @@ const HMean = fabricForOperations(
         new Add(f, s)).diff(parameter),
     (firstOp, secondOp) => {
         if (firstOp.toString() === "0") {
-            return zero;
+            return Const.zero;
         } else if (secondOp.toString() === "0") {
-            return zero;
+            return Const.zero;
         } else {
             return new HMean (firstOp, secondOp)
         }
@@ -148,7 +148,7 @@ const LongAdd = fabricForOperations(
 const LongMul = fabricForOperations(
     longmul,
     "long-mul",
-    (parameter, ...args) => args.slice(0, args.length / 2).reduce((first, second) => new Multiply(first, second), one).diff(parameter)
+    (parameter, ...args) => args.slice(0, args.length / 2).reduce((first, second) => new Multiply(first, second), Const.one).diff(parameter)
 );
 
 const Log = fabricForOperations(
@@ -161,7 +161,7 @@ const Pow = fabricForOperations(
     Math.pow,
     "pow",
     (parameter, a, b) => (
-        new Multiply(new Pow(a, new Subtract(b, one)),
+        new Multiply(new Pow(a, new Subtract(b, Const.one)),
             new Add(
                 new Multiply(b, a.diff(parameter)),
                 new LongMul(a, new Log(a), b.diff(parameter))
@@ -192,13 +192,11 @@ const HarmMean = fabricForOperations(
     "harm-mean",
     (parameter, ...args) => new Divide(
         new Const(args.length / 2),
-        new LongAdd(...args.slice(0, args.length / 2).map(val => new Divide(one, val)))).diff(parameter)
+        new LongAdd(...args.slice(0, args.length / 2).map(val => new Divide(Const.one, val)))).diff(parameter)
 );
 
-// :NOTE: Const.ZERO
-const zero = new Const(0);
-const one = new Const(1);
-
+Const.zero = new Const(0);
+Const.one = new Const(1);
 
 const variableTokens = new Map([
     ["x", 0],
@@ -208,8 +206,8 @@ const variableTokens = new Map([
 
 
 const constTokens = new Map([
-    [0, zero],
-    [1, one]
+    [0, Const.zero],
+    [1, Const.one]
 ]);
 
 
@@ -274,7 +272,7 @@ function parseAll(str, mode) {
         throw new BracketsError(')', expr.length - 1);
     }
     if (res[2] < expr.length - 1) {
-        throw new EndOfExpressionError(expr[res[1] + 1], res[1] + 1);
+        throw new EndOfExpressionError(expr[res[2] + 1], res[2] + 1);
     }
     return res[0];
 }
@@ -293,10 +291,10 @@ function parseExpr(expr, balance, index, mode) {
     }
     index = tokens[2];
     if (typeof op !== "function") {
-        throw new OperatorError(op, index)
+        throw new TokenError(op, index)
     }
     if (op.prototype.func.length !== args.length && op.prototype.func.length !== 0) {
-        throw new LengthOfArgumentsError(args, index)
+        throw new LengthOfArgumentsError(args.length, index)
     }
     return [new op(...args), tokens[1], index]
 }
@@ -332,7 +330,7 @@ function parseTokens(expr, balance, index, mode) {
         }
         index++;
         if (balance === 0 && index !== expr.length) {
-            throw new EndOfExpressionError(ex, index)
+            throw new EndOfExpressionError(ex, index - 1)
         }
     }
     return [args, balance, index]
@@ -347,10 +345,6 @@ const BracketsError = fabricForError("Wrong number of brackets");
 
 const OperatorError = fabricForError("No bracket after operator");
 
-const LengthOfArgumentsError = fabricForError("Wrong number of arguments");
+const LengthOfArgumentsError = fabricForError("Wrong number of arguments. Number of found arguments");
 
 const EmptyStringError = fabricForError("Empty expression");
-
-// let print = console.log
-// let expr = parsePostfix('(1 7 *)')
-// console.log(expr.evaluate(2));
