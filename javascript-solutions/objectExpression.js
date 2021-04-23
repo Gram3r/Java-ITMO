@@ -23,6 +23,7 @@ function fabricForOperations(func, symbol, operDiffer) {
 }
 
 function fabricForError(message) {
+    // :NOTE: Наследование
     let ExprError = function(expr, index) {
         this.message = message + " : " + expr + " on " + index + " index";
     };
@@ -239,13 +240,8 @@ function parse(str) {
 }
 
 
-function parsePrefix(str) {
-    return parseAll(str, 'prefix')
-}
-
-function parsePostfix(str) {
-    return parseAll(str, 'postfix')
-}
+const parsePrefix = str => parseAll(str, 'prefix');
+const parsePostfix = str => parseAll(str, 'postfix');
 
 function parseAll(str, mode) {
     str = str.replace(/[(]/g, ' ( ').replace(/[)]/g, ' ) ');
@@ -327,13 +323,8 @@ function parseTokens(expr, balance, index, mode) {
 
 
 const EndOfExpressionError = fabricForError('Unexpected Symbols');
-
 const TokenError = fabricForError("Unexpected token");
-
 const BracketsError = fabricForError("Wrong number of brackets");
-
 const OperatorError = fabricForError("No bracket after operator");
-
 const LengthOfArgumentsError = fabricForError("Wrong number of arguments. Number of found arguments");
-
 const EmptyStringError = fabricForError("Empty expression");
