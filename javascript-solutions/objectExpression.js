@@ -22,8 +22,8 @@ function fabricForOperations(func, symbol, operDiffer) {
     return constructorOp
 }
 
-function fabricForError(name, message) {
-    class ExprError extends Error{
+function errorFactory(name, message) {
+    class ExprError extends Error {
         constructor(expr, index) {
             super(message + " " + expr + " on " + index + " index");
             this.name = name;
@@ -246,7 +246,7 @@ const parsePostfix = str => parseAll(str, 'postfix');
 
 function parseAll(str, mode) {
     str = str.replace(/[(]/g, ' ( ').replace(/[)]/g, ' ) ');
-    let expr = str.split(/[ ]/).filter(c => c !== "");
+    let expr = str.split(/ /).filter(c => c !== "");
     if (expr.length === 0) {
         throw new EmptyStringError('', 0);
     }
@@ -263,26 +263,18 @@ function parseAll(str, mode) {
     return res[0];
 }
 
-
+// :NOTE: Упростить
 function parseExpr(expr, balance, index, mode) {
-    let tokens = parseTokens(expr, balance, index, mode)
-    let op;
-    let args;
-    if (mode === 'prefix') {
-        op = tokens[0][0];
-        args = tokens[0].slice(1)
-    } else {
-        args = tokens[0].slice(0 , tokens[0].length - 1)
-        op = tokens[0][tokens[0].length - 1]
-    }
-    index = tokens[2];
-    if (typeof op !== "function") {
+    let [args, balance, index] = parseTokens(expr, balance, index, mode);
+    let Op = mode === 'prefix' ? args.shift() : args.pop();
+
+    if (typeof Op !== "function") {
         throw new TokenError(expr[index], index)
     }
-    if (op.prototype.func.length !== args.length && op.prototype.func.length !== 0) {
-        throw new (LengthOfArgumentsError(args.length, op.prototype.func.length))("", index)
+    if (Op.prototype.func.length !== 0 && Op.prototype.func.length !== args.length) {
+        throw new (LengthOfArgumentsError(args.length, Op.prototype.func.length))("", index)
     }
-    return [new op(...args), tokens[1], index]
+    return [new Op(...args), balance, index]
 }
 
 function parseTokens(expr, balance, index, mode) {
@@ -293,6 +285,7 @@ function parseTokens(expr, balance, index, mode) {
             let expression = parseExpr(expr, balance + 1, index + 1, mode);
             index = expression[2];
             args.push(expression[0])
+            // :NOTE: Скобка закрылась
         } else if (ex === (')')) {
             balance--;
             if (balance < 0) {
@@ -323,9 +316,10 @@ function parseTokens(expr, balance, index, mode) {
 }
 
 
-const EndOfExpressionError = fabricForError('EndOfExpressionError','Unexpected Symbols');
-const TokenError = fabricForError('TokenError',"Unexpected token");
-const BracketsError = fabricForError('BracketsError', "Wrong number of brackets");
-const OperatorError = fabricForError('OperatorError', "No bracket after operator");
-const LengthOfArgumentsError = (found, expected) => fabricForError('LengthOfArgumentsError', "Wrong number of arguments. Number of found arguments: " + found + " expected " + expected);
-const EmptyStringError = fabricForError('EmptyStringError', "Empty expression");
+const EndOfExpressionError = errorFactory('EndOfExpressionError','Unexpected Symbols');
+const TokenError = errorFactory('TokenError',"Unexpected token");
+const BracketsError = errorFactory('BracketsError', "Wrong number of brackets");
+const OperatorError = errorFactory('OperatorError', "No bracket after operator");
+// :NOTE: Новый класс
+const LengthOfArgumentsError = (found, expected) => errorFactory('LengthOfArgumentsError', "Wrong number of arguments. Number of found arguments: " + found + " expected " + expected);
+const EmptyStringError = errorFactory('EmptyStringError', "Empty expression");
