@@ -99,41 +99,21 @@ const Negate = fabricForOperations(
 const HMean = fabricForOperations(
     (a, b) => 2 / (1 / a + 1 / b),
     "hmean",
-    (parameter, f, s) => new Divide(
+    (parameter, f, s, fx, sx) => new Divide(
         new Multiply(
             new Const(2),
             new Multiply(f, s)),
         new Add(f, s)).diff(parameter),
-    (firstOp, secondOp) => {
-        if (firstOp.toString() === "0") {
-            return Const.zero;
-        } else if (secondOp.toString() === "0") {
-            return Const.zero;
-        } else {
-            return new HMean (firstOp, secondOp)
-        }
-    })
-
-
+)
 
 
 const Hypot = fabricForOperations(
     (a, b) => a * a + b * b,
     "hypot",
-    (parameter, firstOp, secondOp) => new Add(
-        new Multiply(firstOp, firstOp),
-        new Multiply(secondOp, secondOp)).diff(parameter),
-    (firstOp, secondOp) => {
-        if (firstOp.toString() === "0") {
-            return secondOp;
-        } else if (secondOp.toString() === "0") {
-            return firstOp;
-        } else {
-            return new Hypot(firstOp, secondOp)
-        }
-    })
-
-
+    (parameter, f, s, fx, sx) => new Add(
+        new Multiply(f, f),
+        new Multiply(s, s)).diff(parameter),
+)
 
 
 const longadd = (...args) => (args.reduce((a, b) => a + b, 0))
@@ -154,25 +134,25 @@ const LongMul = fabricForOperations(
 const Log = fabricForOperations(
     Math.log,
     "log",
-    (parameter, a) => new Divide(a.diff(parameter), a)
+    (parameter, f, fx) => new Divide(fx, f)
 );
 
 const Pow = fabricForOperations(
     Math.pow,
     "pow",
-    (parameter, a, b) => (
-        new Multiply(new Pow(a, new Subtract(b, Const.one)),
+    (parameter, f, s, fx, sx) => (
+        new Multiply(
+            new Pow(f, new Subtract(s, Const.one)),
             new Add(
-                new Multiply(b, a.diff(parameter)),
-                new LongMul(a, new Log(a), b.diff(parameter))
+                new Multiply(s, fx),
+                new LongMul(f, new Log(f), sx))
             ))
-    )
 );
 
 const Abs = fabricForOperations(
     Math.abs,
     "abs",
-    (parameter, a) => new Divide(new Multiply(a, a.diff(parameter)), new Abs(a))
+    (parameter, f, fx) => new Divide(new Multiply(f, fx), new Abs(f))
 );
 
 const ArithMean = fabricForOperations(
@@ -184,7 +164,16 @@ const ArithMean = fabricForOperations(
 const GeomMean = fabricForOperations(
     (...args) => Math.pow(Math.abs(longmul(...args)), 1 / args.length),
     "geom-mean",
-    (parameter, ...args) => new Pow(new Abs(new LongMul(...args.slice(0, args.length / 2))), new Const(2 / args.length)).diff(parameter),
+    function (parameter, ...args) {
+        let s = new Const(2 / args.length);
+        let f =  new Abs(new LongMul(...args.slice(0, args.length / 2)));
+        return new Multiply(
+            new Pow(f, new Subtract(s, Const.one)),
+            new Add(
+                new Multiply(s, f.diff(parameter)),
+                new LongMul(f, new Log(f), s.diff(parameter)))
+        )
+    }
 );
 
 const HarmMean = fabricForOperations(
