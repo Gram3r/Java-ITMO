@@ -1,7 +1,5 @@
 "use strict";
 
-
-
 let abstractOperator = function (...args) {
     this.args = args;
     this.toString = () => "" + args[0];
@@ -20,16 +18,6 @@ function fabricForOperations(func, symbol, operDiffer) {
     constructorOp.prototype.symbol = symbol;
     constructorOp.prototype.operDiffer = operDiffer;
     return constructorOp
-}
-
-function errorFactory(name, message) {
-    class ExprError extends Error {
-        constructor(expr, index) {
-            super(message + " " + expr + " on " + index + " index");
-            this.name = name;
-        }
-    }
-    return ExprError
 }
 
 const Const = function(value) {
@@ -51,23 +39,17 @@ const Operator = function(...args) {
     this.diff = function (parameter) {return this.operDiffer(parameter, ...this.args, ...this.args.map(val => val.diff(parameter)))}
 };
 
-
 const Add = fabricForOperations(
     (a, b) => a + b,
     "+",
     (parameter, f, s, fx, sx) => new Add(fx, sx),
 );
 
-
-
 const Subtract = fabricForOperations(
     (a, b) => a - b,
     "-",
     (parameter, f, s, fx, sx) => new Subtract(fx, sx),
 );
-
-
-
 
 const Multiply = fabricForOperations(
     (a, b) => a * b,
@@ -76,9 +58,6 @@ const Multiply = fabricForOperations(
         new Multiply(fx, s),
         new Multiply(f, sx)),
 );
-
-
-
 
 const Divide = fabricForOperations(
     (a, b) => a / b,
@@ -90,13 +69,11 @@ const Divide = fabricForOperations(
         new Multiply(s, s)),
 );
 
-
 const Negate = fabricForOperations(
     (a) => -a,
     "negate",
     (parameter, f, fx) => new Negate(fx),
 );
-
 
 const HMean = fabricForOperations(
     (a, b) => 2 / (1 / a + 1 / b),
@@ -108,7 +85,6 @@ const HMean = fabricForOperations(
         new Add(f, s)).diff(parameter),
 )
 
-
 const Hypot = fabricForOperations(
     (a, b) => a * a + b * b,
     "hypot",
@@ -116,7 +92,6 @@ const Hypot = fabricForOperations(
         new Multiply(f, f),
         new Multiply(s, s)).diff(parameter),
 )
-
 
 const longadd = (...args) => (args.reduce((a, b) => a + b, 0))
 const longmul = (...args) => (args.reduce((a, b) => a * b, 1))
@@ -186,6 +161,8 @@ const HarmMean = fabricForOperations(
         new LongAdd(...args.slice(0, args.length / 2).map(val => new Divide(Const.one, val)))).diff(parameter)
 );
 
+//HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
 Const.zero = new Const(0);
 Const.one = new Const(1);
 
@@ -195,12 +172,10 @@ const variableTokens = new Map([
     ["z", 2]
 ]);
 
-
 const constTokens = new Map([
     [0, Const.zero],
     [1, Const.one]
 ]);
-
 
 const operatorTokens = new Map([
     ["+", Add],
@@ -214,8 +189,6 @@ const operatorTokens = new Map([
     ["geom-mean", GeomMean],
     ["harm-mean", HarmMean]
 ]);
-
-
 
 function parse(str) {
     let exp = [];
@@ -233,93 +206,124 @@ function parse(str) {
             return new Const(Number(i))
         }
     }
-
     for (const i of stack) {
         exp.push(apply(i));
     }
     return exp[0]
 }
 
-
 const parsePrefix = str => parseAll(str, 'prefix');
 const parsePostfix = str => parseAll(str, 'postfix');
 
 function parseAll(str, mode) {
-    str = str.replace(/[(]/g, ' ( ').replace(/[)]/g, ' ) ');
-    let expr = str.split(/ /).filter(c => c !== "");
-    if (expr.length === 0) {
-        throw new EmptyStringError('', 0);
+    const source = new Source(str);
+    let res;
+    if (source.getExpression().length === 0) {
+        throw new EmptyStringError([''], 0);
     }
-    if (expr[0] !== '(') {
-        return parseTokens(expr,0, 0, 'prefix')[0][0]
+    if (source.currentToken !== '(') {
+        if (source.getExpression().length > 1) {
+            throw new EndOfExpressionError(source.getExpression(), source.getInd(2), source.getToken(1))
+        }
+        res = parseTokens(source, 'prefix')
+    } else {
+        source.nextToken()
+        res = parseExpr(source, mode);
     }
-    let res = parseExpr(expr, 1, 1, mode);
-    if (res[1] !== 0) {
-        throw new BracketsError(')', expr.length - 1);
-    }
-    if (res[2] < expr.length - 1) {
-        throw new EndOfExpressionError(expr[res[2] + 1], res[2] + 1);
+    if (source.hasNext()) {
+        throw new EndOfExpressionError(source.getExpression(), source.getInd(1), source.getToken(1));
     }
     return res[0];
 }
 
-// :NOTE: Упростить
-function parseExpr(expr, balance, index, mode) {
-    let [args, balance, index] = parseTokens(expr, balance, index, mode);
-    let Op = mode === 'prefix' ? args.shift() : args.pop();
-
-    if (typeof Op !== "function") {
-        throw new TokenError(expr[index], index)
+function Source(str) {
+    let pos = -1;
+    str = str.replace(/[(]/g, ' ( ').replace(/[)]/g, ' ) ');
+    let expression = str.split(/ /).filter(c => c !== "");
+    this.currentToken = expression[0];
+    this.nextToken = function () {
+        if (this.hasNext()) {
+            pos++;
+            this.currentToken = expression[pos]
+            return this.currentToken;
+        } else {
+            throw new EndOfExpressionError(expression, this.getInd(0), this.currentToken)
+        }
     }
-    if (Op.prototype.func.length !== 0 && Op.prototype.func.length !== args.length) {
-        throw new (LengthOfArgumentsError(args.length, Op.prototype.func.length))("", index)
-    }
-    return [new Op(...args), balance, index]
+    this.hasNext = () => {return pos < expression.length - 1}
+    this.getToken = (ind) => {return expression[ind]}
+    this.getExpression = () => {return expression}
+    this.getPos = () => {return pos}
+    this.getInd = (delta) => {
+        return pos + delta > 0 ? expression.slice(0, pos + delta).map(x => x.length).reduce((a, b) => a + b) + pos + delta : 0}
 }
 
-function parseTokens(expr, balance, index, mode) {
+function parseExpr(source, mode) {
+    let args = parseTokens(source, mode)
+    let Op = mode === 'prefix' ? args.shift() : args.pop()
+    if (typeof Op !== "function") {
+        throw new TokenError(source.getExpression(), source.getInd(0), source.currentToken)
+    }
+    if (Op.prototype.func.length !== args.length && Op.prototype.func.length !== 0) {
+        throw new LengthOfArgumentsError(source.getExpression(), source.getInd(-1), args.length, Op.prototype.func.length, Op.prototype.symbol)
+    }
+    return [new Op(...args)]
+}
+
+function parseTokens(source, mode) {
     let args = [];
-    while (index < expr.length) {
-        let ex = expr[index];
+    while (source.hasNext() && source.nextToken() !== ')') {
+        let ex = source.currentToken;
         if (ex === '(') {
-            let expression = parseExpr(expr, balance + 1, index + 1, mode);
-            index = expression[2];
+            let expression = parseExpr(source, mode);
             args.push(expression[0])
-            // :NOTE: Скобка закрылась
-        } else if (ex === (')')) {
-            balance--;
-            if (balance < 0) {
-                throw new BracketsError(ex, index)
+            if (source.currentToken !== ')') {
+                throw new TokenError(source.getExpression(), source.getInd(0), ex)
             }
-            break;
         } else if (variableTokens.has(ex)) {
             args.push(new Variable(ex))
         } else if (constTokens.has(ex)) {
             args.push(new constTokens.get(ex));
-        } else if (!isNaN(ex)) {
+        } else if (isFinite(ex)) {
             args.push(new Const(Number(ex)))
         } else if (operatorTokens.has(ex)) {
-            if (mode === 'prefix' && expr[index - 1] === '(' || mode === 'postfix' && expr[index + 1] === ')') {
+            if (mode === 'prefix' && source.getToken(source.getPos() - 1) === '(' || mode === 'postfix' && source.getToken(source.getPos() + 1) === ')') {
                 args.push(operatorTokens.get(ex));
             } else {
-                throw new OperatorError(ex, index);
+                throw new OperatorError(source.getExpression(), source.getInd(0), ex);
             }
         } else {
-            throw new TokenError(ex, index)
-        }
-        index++;
-        if (balance === 0 && index !== expr.length) {
-            throw new EndOfExpressionError(ex, index - 1)
+            throw new TokenError(source.getExpression(), source.getInd(0), ex)
         }
     }
-    return [args, balance, index]
+    return args
 }
 
+function errorFactory(errorMessageFunc) {
+    class ExprError extends Error {
+        constructor(expr, index, ...args) {
+            super(errorMessageFunc(...args) + ' on ' + (index + 1) + ' index' + '\n' +
+                expr.join(' ') + '\n' +
+                '-'.repeat(index) + '^');
+        }
+    }
+    return ExprError
+}
 
-const EndOfExpressionError = errorFactory('EndOfExpressionError','Unexpected Symbols');
-const TokenError = errorFactory('TokenError',"Unexpected token");
-const BracketsError = errorFactory('BracketsError', "Wrong number of brackets");
-const OperatorError = errorFactory('OperatorError', "No bracket after operator");
-// :NOTE: Новый класс
-const LengthOfArgumentsError = (found, expected) => errorFactory('LengthOfArgumentsError', "Wrong number of arguments. Number of found arguments: " + found + " expected " + expected);
-const EmptyStringError = errorFactory('EmptyStringError', "Empty expression");
+const EndOfExpressionError = errorFactory(
+    (symbols) =>
+        ('Unexpected Symbols : ' + symbols));
+const TokenError = errorFactory(
+    (token) =>
+        ('Unexpected token : ' + token));
+const BracketsError = errorFactory(
+    (bracket) =>
+        ('Wrong number of brackets ' + bracket));
+const OperatorError = errorFactory(
+    (op) =>
+        ('No bracket after ' + op));
+const LengthOfArgumentsError = errorFactory(
+    (found, need, op) =>
+        ('Wrong number of arguments. Found ' + found + ', but ' + op + ' needs ' + need));
+const EmptyStringError = errorFactory(
+    (index) => 'Was given empty expression');
