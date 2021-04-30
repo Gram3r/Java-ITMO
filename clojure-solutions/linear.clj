@@ -12,7 +12,7 @@
 ; :NOTE: Упростить
 (defn isT? [t] (or
                  (number? t)
-                 (and (isV? t))
+                 (isV? t)
                  (and (not (empty? t)) (every? isT? t) (checkVSSize? t))))
 
 (defn op [f check] (fn [& args]
