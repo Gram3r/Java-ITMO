@@ -12,8 +12,8 @@
 ; :NOTE: Упростить
 (defn isT? [t] (or
                  (number? t)
-                 (and (> (count t) 0) (isV? t))
-                 (and (> (count t) 0) (every? isT? t) (checkVSSize? t))))
+                 (and (isV? t))
+                 (and (not (empty? t)) (every? isT? t) (checkVSSize? t))))
 
 (defn op [f check] (fn [& args]
                      {:pre [(checkVSSize? args) (every? check args)]}
@@ -24,16 +24,19 @@
                      (let [sc (apply * scals)]
                        mapv #(f % sc) x)))
 
-; :NOTE: Дубли
-(def v+ (op + isV?))
-(def v- (op - isV?))
-(def v* (op * isV?))
-(def vd (op / isV?))
+(defn v-op [f] (op f isV?))
+(defn m-op [f] (op f isM?))
 
-(def m+ (op v+ isM?))
-(def m- (op v- isM?))
-(def m* (op v* isM?))
-(def md (op vd isM?))
+; :NOTE: Дубли
+(def v+ (v-op +))
+(def v- (v-op -))
+(def v* (v-op *))
+(def vd (v-op /))
+
+(def m+ (m-op v+))
+(def m- (m-op v-))
+(def m* (m-op v*))
+(def md (m-op vd))
 
 (def v*s (*s * isV?))
 (def m*s (*s v*s isM?))
@@ -60,26 +63,29 @@
   (reduce (fn [a b] (transpose (mapv #(m*v a %) (transpose b)))) ms))
 
 ; :NOTE: Названия
-(defn getSh [t]
-  (if (number? t)
+(defn get-shape [t]
+  (if (or (number? t) (nil? t))
     ()
-    (cons (count t) (getSh (first t)))))
+    (cons (count t) (get-shape (first t)))))
 
-(defn maxSh [ts] (apply max-key count (mapv getSh ts)))
+(defn max-shape [ts] (apply max-key count (mapv get-shape ts)))
 
 ; :NOTE: преобразование в строку
-(defn prefix? [str] (fn [t] (let [ind (index-of str (join " " (getSh t)))]
-                              (and (= ind 0) (not (nil? ind))))))
+(defn prefix? [max-sh] (fn [t]
+                         (let [shape (get-shape t)
+                               min (min (count shape) (count max-sh))]
+                              (= (take min max-sh) (take min shape)))))
+
 
 (defn broadcast [ts]
-  {:pre [(apply = (mapv (prefix? (join " " (maxSh ts))) ts))]}
+  {:pre [(apply = (mapv (prefix? (max-shape ts)) ts))]}
   (letfn [(castNum [num sh] (if (> (count sh) 0)
                               (apply vector (repeat (first sh) (castNum num (rest sh))))
                               num))
           (castTen [t sh] (if (number? t)
                             (castNum t sh)
                             (mapv #(castTen % (rest sh)) t)))]
-    (mapv #(castTen % (maxSh ts)) ts)))
+    (mapv #(castTen % (max-shape ts)) ts)))
 
 (defn tbop [f]
   (letfn [(downOp [& args]
