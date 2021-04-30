@@ -66,7 +66,7 @@
                               (and (= ind 0) (not (nil? ind))))))
 
 (defn broadcast [ts]
-  {:pre [(every? isT? ts) (apply = (mapv (prefix? (join " " (maxSh ts))) ts))]}
+  {:pre [(apply = (mapv (prefix? (join " " (maxSh ts))) ts))]}
   (letfn [(castNum [num sh] (if (> (count sh) 0)
                               (apply vector (repeat (first sh) (castNum num (rest sh))))
                               num))
