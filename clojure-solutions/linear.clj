@@ -1,5 +1,3 @@
-(use '[clojure.string :only (index-of join)])
-
 (defn checkVSSize? [v] (and
                          (every? vector? v)
                          (or (empty? v)
@@ -9,11 +7,15 @@
 
 (defn isM? [m] (and (vector? m) (every? isV? m) (checkVSSize? m)))
 
-; :NOTE: Упростить
+; :NOTE: Исравить
+; [2x3 2x4]
 (defn isT? [t] (or
                  (number? t)
                  (isV? t)
-                 (and (not (empty? t)) (every? isT? t) (checkVSSize? t))))
+                 (and
+                   (not (empty? t))
+                   (every? isT? t)
+                   (checkVSSize? t))))
 
 (defn op [f check] (fn [& args]
                      {:pre [(checkVSSize? args) (every? check args)]}
