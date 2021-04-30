@@ -2,12 +2,14 @@
 
 (defn checkVSSize? [v] (and
                          (every? vector? v)
-                         (or (== (count v) 0) (apply == (mapv count v)))))
+                         (or (empty? v)
+                             (apply == (mapv count v)))))
 
 (defn isV? [v] (and (vector? v) (every? number? v)))
 
 (defn isM? [m] (and (vector? m) (every? isV? m) (checkVSSize? m)))
 
+; :NOTE: Упростить
 (defn isT? [t] (or
                  (number? t)
                  (and (> (count t) 0) (isV? t))
@@ -20,8 +22,9 @@
 (defn *s [f check] (fn [x & scals]
                      {:pre [(check x) (every? number? scals)]}
                      (let [sc (apply * scals)]
-                       mapv #(f % (apply * sc)) x)))
+                       mapv #(f % sc) x)))
 
+; :NOTE: Дубли
 (def v+ (op + isV?))
 (def v- (op - isV?))
 (def v* (op * isV?))
@@ -56,13 +59,15 @@
   {:pre [(every? isM? ms)]}
   (reduce (fn [a b] (transpose (mapv #(m*v a %) (transpose b)))) ms))
 
+; :NOTE: Названия
 (defn getSh [t]
   (if (number? t)
-    []
+    ()
     (cons (count t) (getSh (first t)))))
 
 (defn maxSh [ts] (apply max-key count (mapv getSh ts)))
 
+; :NOTE: преобразование в строку
 (defn prefix? [str] (fn [t] (let [ind (index-of str (join " " (getSh t)))]
                               (and (= ind 0) (not (nil? ind))))))
 
