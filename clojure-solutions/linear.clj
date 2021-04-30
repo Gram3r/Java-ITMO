@@ -19,7 +19,8 @@
 
 (defn *s [f check] (fn [x & scals]
                      {:pre [(check x) (every? number? scals)]}
-                     (mapv #(f % (apply * scals)) x)))
+                     (let [sc (apply * scals)]
+                       mapv #(f % (apply * sc)) x)))
 
 (def v+ (op + isV?))
 (def v- (op - isV?))
