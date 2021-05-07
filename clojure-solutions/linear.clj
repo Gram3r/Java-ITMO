@@ -11,26 +11,27 @@
   (if (or (number? t) (nil? t))
     ()
     (cons (count t) (get-shape (first t)))))
-; :NOTE: Исравить
+; :NOTE: Исправить
 (defn is_tensor? [t] (or
                        (number? t)
                        (and (vector? t)
                             (or (empty? t)
                                 (and (every? is_tensor? t) (apply = (mapv get-shape t)))))))
 
-(defn op [f check] (fn [& args]
-                     {:pre [(checkVSSize? args) (every? check args)]}
-                     (apply mapv f args)))
+(defn op [f check]
+  (fn [& args]
+    {:pre [(checkVSSize? args) (every? check args)]}
+    (apply mapv f args)))
 
-(defn *s [f check] (fn [x & scals]
-                     {:pre [(check x) (every? number? scals)]}
-                     (let [sc (apply * scals)]
-                       mapv #(f % sc) x)))
+(defn *s [f check]
+  (fn [x & scals]
+    {:pre [(check x) (every? number? scals)]}
+    (let [sc (apply * scals)]
+      mapv #(f % sc) x)))
 
 (defn v-op [f] (op f is_vector?))
 (defn m-op [f] (op f is_matrix?))
 
-; :NOTE: Дубли
 (def v+ (v-op +))
 (def v- (v-op -))
 (def v* (v-op *))
@@ -68,7 +69,6 @@
 
 (defn max-shape [ts] (apply max-key count (mapv get-shape ts)))
 
-; :NOTE: преобразование в строку
 (defn prefix? [max-sh] (fn [t]
                          (let [shape (get-shape t)
                                min (min (count shape) (count max-sh))]
@@ -77,9 +77,9 @@
 
 (defn broadcast [ts]
   {:pre [(apply = (mapv (prefix? (max-shape ts)) ts))]}
-  (letfn [(castNum [num sh] (if (> (count sh) 0)
-                              (apply vector (repeat (first sh) (castNum num (rest sh))))
-                              num))
+  (letfn [(castNum [num sh] (if (empty? sh)
+                              num
+                              (apply vector (repeat (first sh) (castNum num (rest sh))))))
           (castTen [t sh] (if (number? t)
                             (castNum t sh)
                             (mapv #(castTen % (rest sh)) t)))]
