@@ -3,19 +3,20 @@
                          (or (empty? v)
                              (apply == (mapv count v)))))
 
-(defn isV? [v] (and (vector? v) (every? number? v)))
+(defn is_vector? [v] (and (vector? v) (every? number? v)))
 
-(defn isM? [m] (and (vector? m) (every? isV? m) (checkVSSize? m)))
+(defn is_matrix? [m] (and (vector? m) (every? is_vector? m) (checkVSSize? m)))
 
+(defn get-shape [t]
+  (if (or (number? t) (nil? t))
+    ()
+    (cons (count t) (get-shape (first t)))))
 ; :NOTE: Исравить
-; [2x3 2x4]
-(defn isT? [t] (or
-                 (number? t)
-                 (isV? t)
-                 (and
-                   (not (empty? t))
-                   (every? isT? t)
-                   (checkVSSize? t))))
+(defn is_tensor? [t] (or
+                       (number? t)
+                       (and (vector? t)
+                            (or (empty? t)
+                                (and (every? is_tensor? t) (apply = (mapv get-shape t)))))))
 
 (defn op [f check] (fn [& args]
                      {:pre [(checkVSSize? args) (every? check args)]}
@@ -26,8 +27,8 @@
                      (let [sc (apply * scals)]
                        mapv #(f % sc) x)))
 
-(defn v-op [f] (op f isV?))
-(defn m-op [f] (op f isM?))
+(defn v-op [f] (op f is_vector?))
+(defn m-op [f] (op f is_matrix?))
 
 ; :NOTE: Дубли
 (def v+ (v-op +))
@@ -40,35 +41,30 @@
 (def m* (m-op v*))
 (def md (m-op vd))
 
-(def v*s (*s * isV?))
-(def m*s (*s v*s isM?))
+(def v*s (*s * is_vector?))
+(def m*s (*s v*s is_matrix?))
 
 (defn scalar [& v]
-  {:pre [(every? isV? v) (checkVSSize? v)]}
+  {:pre [(every? is_vector? v) (checkVSSize? v)]}
   (apply + (apply mapv * v)))
 
 (defn vect [& v]
-  {:pre [(every? isV? v) (every? #(== (count %) 3) v)]}
+  {:pre [(every? is_vector? v) (every? #(== (count %) 3) v)]}
   (reduce (fn [a b] (letfn [(*coord [v1 v2] (- (* (nth a v1) (nth b v2)) (* (nth a v2) (nth b v1))))]
                       (vector (*coord 1 2) (*coord 2 0) (*coord 0 1)))) v))
 
 (defn transpose [m]
-  {:pre [(isM? m)]}
+  {:pre [(is_matrix? m)]}
   (apply mapv vector m))
 
 (defn m*v [m v]
-  {:pre [(isM? m) (isV? v) (== (count (first m)) (count v))]}
+  {:pre [(is_matrix? m) (is_vector? v) (== (count (first m)) (count v))]}
   (mapv #(scalar % v) m))
 
 (defn m*m [& ms]
-  {:pre [(every? isM? ms)]}
+  {:pre [(every? is_matrix? ms)]}
   (reduce (fn [a b] (transpose (mapv #(m*v a %) (transpose b)))) ms))
 
-; :NOTE: Названия
-(defn get-shape [t]
-  (if (or (number? t) (nil? t))
-    ()
-    (cons (count t) (get-shape (first t)))))
 
 (defn max-shape [ts] (apply max-key count (mapv get-shape ts)))
 
@@ -95,7 +91,7 @@
               (apply f args)
               (apply mapv downOp args)))]
     (fn [& ts]
-      {:pre [(every? isT? ts)]}
+      {:pre [(every? is_tensor? ts)]}
       (apply downOp (broadcast ts)))))
 
 (def tb+ (tbop +))
