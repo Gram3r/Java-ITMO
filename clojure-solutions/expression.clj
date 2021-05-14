@@ -101,6 +101,8 @@
                 '*
                 diff_mul))
 
+(defn Square [a] (Multiply a a))
+
 (def Divide (Operation
               double_divide
               '/
@@ -109,13 +111,13 @@
                   (Negate
                    (Divide
                      (first diff_args)
-                     (Multiply (first args) (first args))))
+                     (Square (first args))))
                   (let [mul (apply Multiply (rest args))]
                     (Divide
                       (Subtract
                          (Multiply (first diff_args) mul)
                          (Multiply (first args) (diff_mul (rest args) (rest diff_args))))
-                      (Multiply mul mul)))))))
+                      (Square mul)))))))
 
 (def ArithMean (Operation
                  (fn [& args] (/ (apply + args) (count args)))
@@ -135,11 +137,9 @@
 (def HarmMean (Operation
                 (fn [& args] (double_divide (count args) (apply + (mapv #(/ 1.0 %) args))))
                 'harm-mean
-                (fn [args diff_args] (let [harm (apply HarmMean args)]
-                                       (Multiply
-                                         harm
-                                         harm
-                                         (apply ArithMean (mapv (fn [[a ad]] (Divide ad (Multiply a a))) (mapv vector args diff_args))))))))
+                (fn [args diff_args] (Multiply
+                                       (Square (apply HarmMean args))
+                                       (apply ArithMean (mapv (fn [[a ad]] (Divide ad (Square a))) (mapv vector args diff_args)))))))
 
 (def operator_func_Tokens {
                            '+ add
