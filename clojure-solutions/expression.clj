@@ -40,7 +40,7 @@
                      (fn [this val] (assoc this :val val))
                      (expression_prototype
                        (fn [this _] (_val this))
-                       (fn [this] (format "%.1f" (_val this)))
+                       (fn [this] (str (_val this)))
                        (fn [_ _] Zero)))))
 (def Zero (Constant 0))
 (def One (Constant 1))
@@ -184,3 +184,5 @@
 (def parseFunction (parseAll operator_func_Tokens constant variable_func_Tokens))
 (def parseObject (parseAll operator_obj_Tokens Constant variable_obj_Tokens))
 
+
+(print (toString (diff (Negate (Subtract (Variable "x") (Variable "y"))) "x")))
