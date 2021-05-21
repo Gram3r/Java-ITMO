@@ -39,7 +39,3 @@ prime_index(P, N) :- up_prime(P, N, 2).
 
 
 
-
-
-
-
