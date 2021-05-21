@@ -24,20 +24,22 @@ mul(R, []) :- R is 1.
 mul(R, [H | T]) :- mul(R1, T), R is R1 * H.
 prime_divisors(N, L) :- is_list(L), in_order(L), mul(N, L), !.
 
-find_gcd([], _, [1]) :- !.
-find_gcd(_, [], [1]) :- !.
-find_gcd([H1 | T1], [H2 | T2], [RH | RT]) :- H1 = H2, !, RH = H1, find_gcd(T1, T2, RT).
-find_gcd([H1 | T1], [H2 | T2], T) :- H1 < H2, !, find_gcd(T1, [H2 | T2], T).
-find_gcd([H1 | T1], [H2 | T2], T) :- H1 > H2, !, find_gcd([H1 | T1], T2, T).
 
-gcd(A, B, GCD) :- prime_divisors(A, R1), prime_divisors(B, R2), find_gcd(R1, R2, Res), mul(GCD, Res).
+down_prime(2, 1) :- !.
+down_prime(P, N) :- prime(P), !, P1 is P - 1, down_prime(P1, N1), N is N1 + 1.
+down_prime(P, N) :- P1 is P - 1, down_prime(P1, N).
 
-find_lcm([], R, R) :- !.
-find_lcm(R, [], R) :- !.
-find_lcm([H1 | T1], [H2 | T2], [RH | RT]) :- H1 = H2, !, RH = H1, find_lcm(T1, T2, RT).
-find_lcm([H1 | T1], [H2 | T2], [RH | RT]) :- H1 < H2, !, RH = H1, find_lcm(T1, [H2 | T2], RT).
-find_lcm([H1 | T1], [H2 | T2], [RH | RT]) :- H1 > H2, !, RH = H2, find_lcm([H1 | T1], T2, RT).
+up_prime(P, 0, I) :- P is I - 1, !.
+up_prime(P, N, I) :- prime(I), !, I1 is I + 1, N1 is N - 1, up_prime(P, N1, I1).
+up_prime(P, N, I) :- I1 is I + 1, up_prime(P, N, I1).
 
-lcm_fast(A, B, LCM) :- prime_divisors(A, R1), prime_divisors(B, R2), find_lcm(R1, R2, Res), mul(LCM, Res).
+prime_index(P, N) :- number(P), !, prime(P), down_prime(P, N).
+prime_index(P, N) :- up_prime(P, N, 2).
 
-lcm(A, B, LCM) :- prime_divisors(A, R1), prime_divisors(B, R2), gcd(A, B, GCD), mul(Res1, R1), mul(Res2, R2), MUL is Res1 * Res2, LCM is MUL / GCD.
+
+
+
+
+
+
+
