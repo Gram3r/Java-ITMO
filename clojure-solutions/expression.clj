@@ -229,6 +229,7 @@
 
 ;Start of combinatoric parser
 
+; :NOTE: (load-file "parser.clj")
 (defn -return [value tail] {:value value :tail tail})
 (def -valid? boolean)
 (def -value :value)
@@ -296,7 +297,7 @@
 
 
 (def *number (+seqf
-               (fn [sign digits dot digits_dot] (read-string (str sign (apply str digits) dot (apply str digits_dot))))
+               (comp read-string str)
                (+opt (+char "-"))
                (+plus *digit)
                (+opt (+char "."))
