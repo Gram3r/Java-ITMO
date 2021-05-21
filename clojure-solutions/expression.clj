@@ -353,11 +353,6 @@
           [+left_assoc ["<->"]]])
 
 (def *expression
-  (reduce (fn [*elem_res [assoc operators]] (assoc *elem_res operators)) *element ops))
+  (reduce (fn [*elem_res [_assoc operators]] (_assoc *elem_res operators)) *element ops))
 
 (def parseObjectInfix (+parser *expression))
-(def expr (parseObjectInfix "(3.0 -> 11.0 -> 3.0 -> 4.0)"))
-(println (evaluate expr {"z" 0.0, "x" 0.0, "y" 0.0}))
-;(println (toStringInfix expr))
-
-;(tabulate (+level *element (first ops)) ["2 + 3 * 2 + 2 * 2"])
