@@ -23,7 +23,7 @@ Add to the program parsing and calculating expressions of three variables suppor
 * The program should output the calculation results for all integer values of variables from the range -2..2.
 3. The implementation should not contain unverifiable type conversions
 4. When performing a task, pay attention to the ease of adding new types and operations.
-5. **Modification of ** *AsmUpb*
+5. __Modification of__ *AsmUpb*
 
    * Additionally implement unary operations:
      * `abs` is the modulus of a number `abs -5` is equal to `5`;
