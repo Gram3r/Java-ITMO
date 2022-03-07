@@ -1,4 +1,4 @@
-## Homework. Expression parser and evaluating in different types
+## Expression parser and evaluating in different types
 
 Add to the program parsing and calculating expressions of three variables support for calculations in various types.
 1. Create the class `expression.class.generic.GenericTabulator`, which implements the `expression.interface.generic.Tabulator`:
